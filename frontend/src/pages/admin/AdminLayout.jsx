@@ -2,8 +2,7 @@ import { Navigate, Outlet, Link, useLocation, useNavigate } from 'react-router-d
 import { REST_API_BASE } from '../../config/api.js';
 
 function useAuth() {
-  const token = localStorage.getItem('adminToken');
-  return !!token;
+  return localStorage.getItem('isAdmin') === 'true';
 }
 
 function AdminLayout() {
@@ -16,7 +15,7 @@ function AdminLayout() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+    localStorage.removeItem('isAdmin');
     navigate('/admin/login');
   };
 

@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
 import { motion } from 'framer-motion';
 import HomePage from './pages/HomePage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
@@ -14,7 +21,7 @@ import OffersAdminPage from './pages/admin/OffersAdminPage.jsx';
 import GalleryAdminPage from './pages/admin/GalleryAdminPage.jsx';
 import AppointmentsAdminPage from './pages/admin/AppointmentsAdminPage.jsx';
 import SettingsAdminPage from './pages/admin/SettingsAdminPage.jsx';
-import LoginPage from './pages/admin/LoginPage.jsx';
+import LoginPage from "./pages/LoginPage.jsx";
 import TestimonialsAdminPage from './pages/admin/TestimonialsAdminPage.jsx';
 import PremiumFooter from './components/PremiumFooter.jsx';
 import { BookingModalProvider, useBookingModal } from './context/BookingModalContext.jsx';
@@ -35,6 +42,13 @@ const DEFAULT_SETTINGS = {
   email: SALON_EMAIL,
   workingHours: '9:30 AM – 8:00 PM',
 };
+
+function ProtectedRoute({ children }) {
+  if (localStorage.getItem('isAdmin') !== 'true') {
+    return <Navigate to="/admin/login" replace />;
+  }
+  return children;
+}
 
 function NavHeader() {
   const { openBookingModal } = useBookingModal();
@@ -197,8 +211,15 @@ function AppLayout() {
           <Route path="/gallery" element={<GalleryPage apiBase={REST_API_BASE} />} />
           <Route path="/book" element={<BookingPage apiBase={REST_API_BASE} settings={settings} />} />
           <Route path="/contact" element={<ContactPage settings={settings} />} />
-          <Route path="/admin/login" element={<LoginPage apiBase={REST_API_BASE} />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin/login" element={<LoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<DashboardPage apiBase={REST_API_BASE} />} />
             <Route path="services" element={<ServicesAdminPage apiBase={REST_API_BASE} />} />
             <Route path="offers" element={<OffersAdminPage apiBase={REST_API_BASE} />} />

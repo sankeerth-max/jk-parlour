@@ -1,242 +1,206 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import {
+  loadServices,
+  persistServices,
+  notifyServicesUpdated,
+} from '../../lib/servicesStorage.js';
 
-const CATEGORIES = [
-  'Threading',
-  'Hair Services',
-  'Waxing',
-  'Skin Care',
-  'Hair Coloring',
-  'Facials',
-  'Pedicure & Manicure',
-  'Bridal Makeup',
-  'Mehendi',
-  'Bridal Packages',
-];
+const emptyForm = () => ({
+  title: '',
+  price: '',
+  description: '',
+});
 
-function ServicesAdminPage({ apiBase }) {
-  const [services, setServices] = useState([]);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({
-    name: '',
-    category: 'Bridal Makeup',
-    description: '',
-    priceFrom: '',
-    imageUrl: '',
-    isActive: true,
-  });
+function descriptionToDetails(text) {
+  const lines = String(text)
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.length ? lines : ['Details on request'];
+}
 
-  const load = async () => {
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    const res = await fetch(`${apiBase}/services/all`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setServices(data);
-  };
+export default function ServicesAdminPage() {
+  const [services, setServices] = useState(() => loadServices());
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
 
-  useEffect(() => {
-    if (!apiBase) return;
-    load().catch(() => {});
-  }, [apiBase]);
-
-  const startNew = () => {
-    setEditing(null);
-    setForm({
-      name: '',
-      category: 'Bridal Makeup',
-      description: '',
-      priceFrom: '',
-      imageUrl: '',
-      isActive: true,
-    });
-  };
-
-  const startEdit = (service) => {
-    setEditing(service._id);
-    setForm({
-      name: service.name || '',
-      category: service.category || 'Bridal Makeup',
-      description: service.description || '',
-      priceFrom: service.priceFrom || '',
-      imageUrl: service.imageUrl || '',
-      isActive: service.isActive ?? true,
-    });
+  const commit = (next) => {
+    persistServices(next);
+    setServices(next);
+    notifyServicesUpdated();
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const resetForm = () => {
+    setEditingId(null);
+    setForm(emptyForm());
+  };
+
+  const handleAddService = () => {
+    resetForm();
+  };
+
+  const handleEdit = (service) => {
+    setEditingId(service.id);
+    setForm({
+      title: service.title,
+      price: service.startsFrom ?? service.price ?? '',
+      description: service.description,
+    });
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    const payload = { ...form, priceFrom: Number(form.priceFrom || 0) };
-    const url = editing ? `${apiBase}/services/${editing}` : `${apiBase}/services`;
-    const method = editing ? 'PUT' : 'POST';
-    await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    await load();
-    startNew();
+    const title = form.title.trim();
+    if (!title) return;
+
+    const desc = form.description.trim();
+    const startsFrom = form.price.trim() || '—';
+    const details = descriptionToDetails(form.description);
+
+    if (editingId) {
+      const next = services.map((s) => {
+        if (s.id !== editingId) return s;
+        return {
+          ...s,
+          title,
+          description: desc,
+          startsFrom,
+          details,
+        };
+      });
+      commit(next);
+    } else {
+      commit([
+        ...services,
+        {
+          id: crypto.randomUUID(),
+          title,
+          description: desc,
+          startsFrom,
+          image: '/services-makeup.jpg',
+          details,
+        },
+      ]);
+    }
+    resetForm();
   };
 
-  const handleDelete = async (id) => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
+  const handleDelete = (id) => {
     if (!window.confirm('Delete this service?')) return;
-    await fetch(`${apiBase}/services/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    await load();
+    const next = services.filter((s) => s.id !== id);
+    commit(next);
+    if (editingId === id) resetForm();
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl text-deepCharcoal mb-1">Services</h1>
           <p className="text-xs text-neutral-600">
-            Manage all salon and bridal services shown on the website.
+            Changes save to this device and appear on the public Services page.
           </p>
         </div>
-        <button type="button" onClick={startNew} className="btn-outline text-xs">
-          + New Service
+        <button type="button" onClick={handleAddService} className="btn-primary text-xs px-5 py-2.5">
+          Add Service
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <form onSubmit={handleSubmit} className="card-luxe p-5 space-y-3">
+      <div className="grid lg:grid-cols-5 gap-6 items-start">
+        <form onSubmit={handleSubmit} className="card-luxe p-5 space-y-4 lg:col-span-2">
           <p className="text-sm font-medium text-deepCharcoal">
-            {editing ? 'Edit Service' : 'Add New Service'}
+            {editingId ? 'Edit service' : 'New service'}
           </p>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] text-neutral-600 mb-1">Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-neutral-600 mb-1">Category</label>
-              <select
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] text-neutral-600 mb-1">Starting Price (₹)</label>
-              <input
-                name="priceFrom"
-                type="number"
-                value={form.priceFrom}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-neutral-600 mb-1">Image URL</label>
-              <input
-                name="imageUrl"
-                value={form.imageUrl}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
-              />
-            </div>
+          <div>
+            <label htmlFor="svc-title" className="block text-[11px] font-medium text-neutral-600 mb-1.5">
+              Title
+            </label>
+            <input
+              id="svc-title"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              placeholder="e.g. Bridal Makeup"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/30"
+            />
           </div>
           <div>
-            <label className="block text-[11px] text-neutral-600 mb-1">Description</label>
+            <label htmlFor="svc-price" className="block text-[11px] font-medium text-neutral-600 mb-1.5">
+              Price (shown as &quot;Starting from&quot;)
+            </label>
+            <input
+              id="svc-price"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              placeholder="e.g. ₹5,000"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/30"
+            />
+          </div>
+          <div>
+            <label htmlFor="svc-desc" className="block text-[11px] font-medium text-neutral-600 mb-1.5">
+              Description
+            </label>
             <textarea
+              id="svc-desc"
               name="description"
               value={form.description}
               onChange={handleChange}
-              rows={3}
-              className="w-full rounded-2xl border border-neutral-200 bg-white/70 px-3 py-2 text-xs"
+              rows={4}
+              placeholder="Short intro. Use separate lines for bullet-style detail items."
+              className="w-full resize-y rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/30"
             />
           </div>
-          <label className="inline-flex items-center gap-2 text-[11px] text-neutral-700">
-            <input
-              type="checkbox"
-              name="isActive"
-              checked={form.isActive}
-              onChange={handleChange}
-            />
-            Active (show on website)
-          </label>
-          <button type="submit" className="btn-primary text-xs px-4 py-2">
-            {editing ? 'Update Service' : 'Add Service'}
-          </button>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button type="submit" className="btn-primary text-xs px-4 py-2">
+              {editingId ? 'Save changes' : 'Add Service'}
+            </button>
+            {(editingId || form.title || form.price || form.description) && (
+              <button type="button" onClick={resetForm} className="btn-outline text-xs px-4 py-2">
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
 
-        <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
+        <ul className="space-y-3 lg:col-span-3 w-full min-w-0">
           {services.map((s) => (
-            <div
-              key={s._id}
-              className="card-luxe p-4 flex items-start justify-between gap-3 text-xs"
+            <li
+              key={s.id}
+              className={`card-luxe p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 ${
+                editingId === s.id ? 'ring-2 ring-roseGold/40' : ''
+              }`}
             >
-              <div>
-                <p className="font-medium text-deepCharcoal">{s.name}</p>
-                <p className="text-[11px] text-neutral-500 mb-1">
-                  {s.category} • From ₹{s.priceFrom}
-                </p>
-                {s.description && (
-                  <p className="text-[11px] text-neutral-600 line-clamp-2">{s.description}</p>
-                )}
-                {!s.isActive && (
-                  <p className="text-[11px] text-red-500 mt-1">Disabled (hidden on website)</p>
-                )}
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-base text-deepCharcoal">{s.title}</p>
+                <p className="text-sm font-medium text-roseGold mt-1">{s.startsFrom ?? s.price}</p>
+                <p className="text-xs text-neutral-600 mt-2 leading-relaxed">{s.description}</p>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex sm:flex-col gap-2 shrink-0 sm:items-end">
                 <button
                   type="button"
-                  onClick={() => startEdit(s)}
-                  className="text-[11px] px-3 py-1 rounded-full border border-neutral-200 hover:bg-softPink/60"
+                  onClick={() => handleEdit(s)}
+                  className="text-xs font-medium rounded-full border border-neutral-200 bg-white px-4 py-2 text-deepCharcoal hover:bg-neutral-50 transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(s._id)}
-                  className="text-[11px] px-3 py-1 rounded-full border border-red-200 text-red-500 hover:bg-red-50"
+                  onClick={() => handleDelete(s.id)}
+                  className="text-xs font-medium rounded-full border border-red-200 bg-white px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
                 >
                   Delete
                 </button>
               </div>
-            </div>
+            </li>
           ))}
-          {!services.length && (
-            <p className="text-xs text-neutral-500">No services added yet.</p>
-          )}
-        </div>
+        </ul>
       </div>
     </div>
   );
 }
-
-export default ServicesAdminPage;
-

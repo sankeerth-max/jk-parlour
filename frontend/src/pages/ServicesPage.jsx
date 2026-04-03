@@ -1,104 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { whatsappWaMeDigits } from '../constants/contact.js';
-
-/**
- * Images match HomePage "Beauty Services at a Glance" (`SERVICES_WITH_IMAGES`).
- * Home Signature "Makeup & Bridal" and Bridal Services both use `makeup-bridal-signature.png`.
- */
-const SERVICES = [
-  {
-    title: 'Hair Services',
-    description: 'Precision cuts, styling, and restorative care in a calm salon setting.',
-    startsFrom: '₹150',
-    image: '/services-hair.jpg',
-    details: [
-      'Hair Cut (Layer / Step / U Cut)',
-      'Hair Styling (Blow Dry, Curls, Straightening)',
-      'Hair Spa (Repair & Nourishment)',
-      'Hair Smoothening & Straightening',
-      'Hair Coloring (Global, Highlights, Balayage)',
-      'Keratin & Hair Botox Treatments',
-      'Scalp Treatments (Hair Fall & Dandruff Control)',
-    ],
-  },
-  {
-    title: 'Skin Care',
-    description: 'Glow-focused facials and rituals tailored to your skin.',
-    startsFrom: '₹300',
-    image: '/services-skincare.jpg',
-    details: [
-      'Basic & Advanced Facials (Gold, Diamond, Hydra)',
-      'Clean-Up & Detan Treatments',
-      'Skin Polishing',
-      'Anti-Aging & Brightening Facials',
-      'Acne Treatment',
-      'Under Eye Care',
-    ],
-  },
-  {
-    title: 'Makeup & Makeovers',
-    description: 'Soft glam and event-ready looks with a refined, natural finish.',
-    startsFrom: '₹3,000',
-    image: '/services-makeup.jpg',
-    details: [
-      'Party Makeup',
-      'Engagement & Reception Makeup',
-      'HD & Airbrush Makeup',
-      'Natural & Glam Makeup Looks',
-      'Hairstyling for Events',
-      'Saree Draping',
-    ],
-  },
-  {
-    title: 'Nail Care',
-    description: 'Manicure and pedicure care for polished, healthy nails.',
-    startsFrom: '₹100',
-    image: '/services-nails.jpg',
-    details: [
-      'Manicure & Spa Manicure',
-      'Pedicure & Spa Pedicure',
-      'Gel Polish',
-      'Nail Art & Nail Extensions',
-      'Nail Refill & Removal',
-    ],
-  },
-  {
-    title: 'Waxing',
-    description: 'Smooth, hygienic waxing from face to body.',
-    startsFrom: '₹80',
-    image: '/services-waxing.jpg',
-    details: [
-      'Full Body Waxing',
-      'Arms & Legs Waxing',
-      'Underarms Waxing',
-      'Face Waxing',
-      'Bikini Waxing',
-      'Rica & Chocolate Wax',
-    ],
-  },
-  {
-    title: 'Bridal Services',
-    description: 'Complete bridal looks with premium finishing for your celebration.',
-    startsFrom: '₹4,999',
-    image: '/makeup-bridal-signature.png',
-    details: [
-      'Bridal Makeup Packages',
-      'Pre-Bridal Skincare Packages',
-      'Bridal Hair Styling',
-      'Trial Makeup Session',
-      'Mehandi for Bride',
-      'Family Makeup Services',
-    ],
-  },
-  {
-    title: 'Mehendi Services',
-    description: 'Intricate henna designs for weddings and special occasions.',
-    startsFrom: '₹500',
-    image: '/services-mehendi.jpg',
-    details: ['Bridal Mehendi', 'Party Mehendi', 'Custom Motifs', 'Aftercare Guidance'],
-  },
-];
+import {
+  loadServices,
+  SERVICES_UPDATED_EVENT,
+} from '../lib/servicesStorage.js';
 
 function buildServiceWhatsAppUrl(serviceName, settingsWhatsapp) {
   const text = `Hello, I would like to book ${serviceName} at Sri Karthika Bridal Studio. Please share details.`;
@@ -107,7 +13,21 @@ function buildServiceWhatsAppUrl(serviceName, settingsWhatsapp) {
 }
 
 function ServicesPage({ settings }) {
+  const [services, setServices] = useState(() => loadServices());
   const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    const sync = () => {
+      setServices(loadServices());
+      setExpandedId(null);
+    };
+    window.addEventListener('storage', sync);
+    window.addEventListener(SERVICES_UPDATED_EVENT, sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener(SERVICES_UPDATED_EVENT, sync);
+    };
+  }, []);
 
   const openWhatsAppBook = (serviceName) => {
     const url = buildServiceWhatsAppUrl(serviceName, settings?.whatsapp);
@@ -140,11 +60,12 @@ function ServicesPage({ settings }) {
       <section className="bg-white pb-20 md:pb-24 pt-10 md:pt-12 px-4 sm:px-6 md:px-8 lg:px-10">
         <div className="mx-auto max-w-[1200px]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[35px] items-stretch">
-            {SERVICES.map((service, index) => {
-              const isOpen = expandedId === service.title;
+            {services.map((service, index) => {
+              const rowKey = service.id ?? service.title;
+              const isOpen = expandedId === rowKey;
               return (
                 <motion.article
-                  key={service.title}
+                  key={rowKey}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.12 }}
@@ -187,7 +108,7 @@ function ServicesPage({ settings }) {
                       </motion.button>
                       <button
                         type="button"
-                        onClick={() => setExpandedId(isOpen ? null : service.title)}
+                        onClick={() => setExpandedId(isOpen ? null : rowKey)}
                         className="self-start text-[13px] font-medium text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
                       >
                         View Details
@@ -204,8 +125,8 @@ function ServicesPage({ settings }) {
                           className="overflow-hidden"
                         >
                           <ul className="mt-4 space-y-2 border-t border-[#F0F0F0] pt-4 text-[13px] text-[#6E6E73]">
-                            {service.details.map((item) => (
-                              <li key={item} className="flex gap-2">
+                            {service.details.map((item, i) => (
+                              <li key={`${rowKey}-d-${i}`} className="flex gap-2">
                                 <span className="text-[#C89B3C]" aria-hidden="true">
                                   ·
                                 </span>
