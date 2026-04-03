@@ -17,6 +17,7 @@ function GalleryAdminPage({ apiBase }) {
   });
 
   const load = async () => {
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     const res = await fetch(`${apiBase}/gallery`, {
@@ -27,6 +28,7 @@ function GalleryAdminPage({ apiBase }) {
   };
 
   useEffect(() => {
+    if (!apiBase) return;
     load().catch(() => {});
   }, [apiBase]);
 

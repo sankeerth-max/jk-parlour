@@ -4,14 +4,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        roseGold: '#b76e79',
-        softPink: '#f9e3e8',
-        beige: '#f5efe6',
-        deepCharcoal: '#262626',
+        roseGold: '#a67c52',
+        softPink: '#f5f5f7',
+        beige: '#f5f5f7',
+        deepCharcoal: '#1d1d1f',
       },
       fontFamily: {
-        display: ['\"Playfair Display\"', 'serif'],
-        body: ['\"Poppins\"', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        body: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
         luxe: '0 24px 60px rgba(0,0,0,0.18)',

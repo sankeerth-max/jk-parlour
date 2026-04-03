@@ -9,7 +9,10 @@ router.get('/', async (req, res) => {
     const now = new Date();
     const offers = await Offer.find({
       isActive: true,
-      $or: [{ startDate: null }, { startDate: { $lte: now } }],
+      $and: [
+        { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
+        { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+      ],
     }).sort({ createdAt: -1 });
     res.json(offers);
   } catch (err) {

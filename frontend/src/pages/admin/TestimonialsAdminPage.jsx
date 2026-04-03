@@ -10,12 +10,14 @@ function TestimonialsAdminPage({ apiBase }) {
   });
 
   const load = async () => {
+    if (!apiBase) return;
     const res = await fetch(`${apiBase}/testimonials`);
     const data = await res.json();
     setTestimonials(data);
   };
 
   useEffect(() => {
+    if (!apiBase) return;
     load().catch(() => {});
   }, [apiBase]);
 

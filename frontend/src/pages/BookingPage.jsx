@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { whatsappWaMeDigits } from '../constants/contact.js';
+import { USE_REST_API } from '../config/api.js';
 
 const SERVICE_OPTIONS = [
   'Threading',
@@ -8,17 +12,24 @@ const SERVICE_OPTIONS = [
   'Hair Coloring',
   'Facials',
   'Pedicure & Manicure',
-  'Bridal Makeup',
+  'Makeup Services',
   'Mehendi',
-  'Bridal Packages',
+  'Package Services',
 ];
 
-function BookingPage({ apiBase }) {
+const inputBase =
+  'w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/20 transition-colors';
+
+function BookingPage({ apiBase, settings }) {
+  const location = useLocation();
+  const [services, setServices] = useState([]);
   const [form, setForm] = useState({
     name: '',
     phone: '',
     email: '',
     service: '',
+    category: '',
+    price: '',
     date: '',
     timeSlot: '',
     message: '',
@@ -26,9 +37,77 @@ function BookingPage({ apiBase }) {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!USE_REST_API) return undefined;
+    const ac = new AbortController();
+    fetch(`${apiBase}/services`, { signal: ac.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setServices(data);
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, [apiBase]);
+
+  const serviceOptions = useMemo(() => {
+    if (services.length) {
+      return services.map((service) => ({
+        value: service.name,
+        label: service.name,
+        category: service.category || '',
+        price:
+          service.priceFrom !== undefined && service.priceFrom !== null
+            ? String(service.priceFrom)
+            : '',
+      }));
+    }
+    return SERVICE_OPTIONS.map((name) => ({
+      value: name,
+      label: name,
+      category: name,
+      price: '',
+    }));
+  }, [services]);
+
+  useEffect(() => {
+    const selected = location.state?.selectedService;
+    if (!selected) return;
+    setForm((prev) => ({
+      ...prev,
+      service: selected.name || prev.service,
+      category: selected.category || prev.category,
+      price:
+        selected.price !== undefined && selected.price !== null
+          ? String(selected.price)
+          : prev.price,
+    }));
+  }, [location.state]);
+
+  const selectedSummary = useMemo(() => {
+    if (!form.service) return null;
+    return {
+      service: form.service,
+      price: form.price ? `₹${form.price}` : 'On request',
+      category: form.category || 'General Services',
+    };
+  }, [form.service, form.price, form.category]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'service') {
+      const selected = serviceOptions.find((option) => option.value === value);
+      setForm((prev) => ({
+        ...prev,
+        service: value,
+        category: selected?.category || '',
+        price: selected?.price || '',
+      }));
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -37,6 +116,15 @@ function BookingPage({ apiBase }) {
 
     if (!form.name || !form.phone || !form.service || !form.date || !form.timeSlot) {
       setStatus({ type: 'error', message: 'Please fill all required fields.' });
+      return;
+    }
+
+    if (!USE_REST_API) {
+      setStatus({
+        type: 'error',
+        message:
+          'The booking server is not connected. Use “Confirm on WhatsApp” below to send your request.',
+      });
       return;
     }
 
@@ -61,6 +149,8 @@ function BookingPage({ apiBase }) {
         phone: '',
         email: '',
         service: '',
+        category: '',
+        price: '',
         date: '',
         timeSlot: '',
         message: '',
@@ -72,113 +162,147 @@ function BookingPage({ apiBase }) {
     }
   };
 
+  const whatsappNumber = whatsappWaMeDigits(settings?.whatsapp);
+  const whatsappMessage = encodeURIComponent(
+    `Hi, I would like to book:\nService: ${form.service || '-'}\nPrice: ${
+      form.price ? `₹${form.price}` : 'On request'
+    }\nCategory: ${form.category || 'General Services'}\nDate: ${form.date || '-'}\nTime: ${
+      form.timeSlot || '-'
+    }\nName: ${form.name || '-'}`
+  );
+
   return (
-    <section className="section-padding">
-      <div className="lux-container grid md:grid-cols-2 gap-10 items-start">
-        <div>
+    <motion.section
+      className="section-padding-lg bg-cream"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="lux-container grid md:grid-cols-2 gap-12 md:gap-24 items-start">
+        <div className="space-y-8 text-center md:text-left">
           <p className="section-title">Book Appointment</p>
-          <h1 className="section-heading">Schedule Your Visit</h1>
-          <p className="section-subtitle">
+          <h1 className="section-heading mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+            Book Appointment
+          </h1>
+          <p className="section-subtitle mx-auto md:mx-0">
             Fill in the details below to request an appointment. Our team will reach out to confirm
-            availability, timing, and any bridal package customisations.
+            availability, timing, and service details.
           </p>
-          <div className="mt-6 space-y-3 text-sm text-neutral-700">
-            <p className="font-medium">Booking Guidelines</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Maximum of 3–4 bridal bookings are accepted per time slot.</li>
-              <li>Please select the primary service you are interested in.</li>
-              <li>For bridal packages, mention events and dates in the message box.</li>
+          <div className="pt-1 md:pt-2 space-y-4 lead-text text-muted text-left">
+            <p className="font-medium text-ink">Booking Guidelines</p>
+            <ul className="space-y-3">
+              <li>· We accommodate appointments based on service duration and team availability.</li>
+              <li>· Please select the primary service you are interested in.</li>
+              <li>· For bridal bookings, you can also book a consultation.</li>
             </ul>
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="card-luxe p-6 md:p-8 space-y-4 w-full"
-        >
-          <div className="grid md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="card-luxe p-6 md:p-8 space-y-5 w-full">
+          {selectedSummary && (
+            <div className="rounded-2xl border border-border bg-warmbeige/35 px-5 py-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Selected Service</p>
+              <p className="text-ink font-medium" style={{ fontFamily: 'var(--font-display)' }}>
+                {selectedSummary.service}
+              </p>
+              <p className="text-sm text-muted mt-1">
+                Price: {selectedSummary.price}
+              </p>
+              <p className="text-xs text-muted mt-1">
+                Category: {selectedSummary.category}
+              </p>
+            </div>
+          )}
+          <div className="grid md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Name *
-              </label>
+              <label className="block text-xs font-medium text-ink mb-1.5">Name *</label>
               <input
                 type="text"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
+                className={inputBase}
+                placeholder="Your name"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Phone *
-              </label>
+              <label className="block text-xs font-medium text-ink mb-1.5">Phone *</label>
               <input
                 type="tel"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
+                className={inputBase}
+                placeholder="Phone number"
               />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Email
-              </label>
+              <label className="block text-xs font-medium text-ink mb-1.5">Email</label>
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
+                className={inputBase}
+                placeholder="Email (optional)"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Select Service *
-              </label>
-              <select
-                name="service"
-                value={form.service}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
-              >
+              <label className="block text-xs font-medium text-ink mb-1.5">Select Service *</label>
+              <select name="service" value={form.service} onChange={handleChange} className={inputBase}>
                 <option value="">Select a service</option>
-                {SERVICE_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                {serviceOptions.map((service) => (
+                  <option key={`${service.value}-${service.category}`} value={service.value}>
+                    {service.label}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Date *
-              </label>
+              <label className="block text-xs font-medium text-ink mb-1.5">Category</label>
+              <input
+                type="text"
+                name="category"
+                value={form.category}
+                readOnly
+                className={`${inputBase} bg-warmbeige/20`}
+                placeholder="Category"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1.5">Price</label>
+              <input
+                type="text"
+                name="price"
+                value={form.price ? `₹${form.price}` : ''}
+                readOnly
+                className={`${inputBase} bg-warmbeige/20`}
+                placeholder="Auto-filled from selected service"
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-medium text-ink mb-1.5">Date *</label>
               <input
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
+                className={inputBase}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-neutral-600 mb-1">
-                Time Slot *
-              </label>
-              <select
-                name="timeSlot"
-                value={form.timeSlot}
-                onChange={handleChange}
-                className="w-full rounded-full border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
-              >
+              <label className="block text-xs font-medium text-ink mb-1.5">Time Slot *</label>
+              <select name="timeSlot" value={form.timeSlot} onChange={handleChange} className={inputBase}>
                 <option value="">Select a time slot</option>
                 <option value="9:30 AM – 11:30 AM">9:30 AM – 11:30 AM</option>
                 <option value="12:00 PM – 2:00 PM">12:00 PM – 2:00 PM</option>
@@ -189,22 +313,20 @@ function BookingPage({ apiBase }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-600 mb-1">
-              Message
-            </label>
+            <label className="block text-xs font-medium text-ink mb-1.5">Message</label>
             <textarea
               name="message"
               value={form.message}
               onChange={handleChange}
               rows={4}
-              className="w-full rounded-3xl border border-neutral-200 bg-white/70 px-4 py-2 text-sm focus:outline-none focus:border-roseGold focus:ring-1 focus:ring-roseGold/40"
+              className={`${inputBase} resize-none`}
               placeholder="Share details like events, functions, preferred style, or any specific requests."
             />
           </div>
 
           {status.message && (
             <p
-              className={`text-xs ${
+              className={`text-sm ${
                 status.type === 'error' ? 'text-red-600' : 'text-emerald-600'
               }`}
             >
@@ -212,18 +334,33 @@ function BookingPage({ apiBase }) {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full md:w-auto justify-center disabled:opacity-60"
-          >
-            {loading ? 'Booking...' : 'Submit Booking Request'}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full sm:w-auto justify-center disabled:opacity-60"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+            >
+              {loading ? 'Booking...' : 'Submit Appointment Request'}
+            </motion.button>
+            <motion.a
+              href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-outline w-full sm:w-auto justify-center"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+            >
+              Confirm on WhatsApp
+            </motion.a>
+          </div>
         </form>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
 export default BookingPage;
-

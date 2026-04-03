@@ -14,7 +14,8 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Avoid default port 5000 on macOS — AirPlay Receiver often binds there and returns 403 without CORS (see frontend API port).
+app.use(cors({ origin: true }));
 app.use(express.json());
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/sri-karthika-bridal';
@@ -40,7 +41,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

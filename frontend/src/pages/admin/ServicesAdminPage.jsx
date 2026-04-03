@@ -26,6 +26,7 @@ function ServicesAdminPage({ apiBase }) {
   });
 
   const load = async () => {
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     const res = await fetch(`${apiBase}/services/all`, {
@@ -36,6 +37,7 @@ function ServicesAdminPage({ apiBase }) {
   };
 
   useEffect(() => {
+    if (!apiBase) return;
     load().catch(() => {});
   }, [apiBase]);
 

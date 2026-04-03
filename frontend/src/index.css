@@ -1,153 +1,412 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700&display=swap');
+/* Header lockup — script + caps (reference layout) */
+@import url('https://fonts.googleapis.com/css2?family=Allura&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Luxury beauty salon design system */
+@theme {
+  --color-cream: #ffffff;
+  --color-warmbeige: #f5f5f7;
+  /* Warm champagne bronze — luxury accent (links, Explore, stars, focus rings) */
+  --color-champagne: #a67c52;
+  --color-btn: #1d1d1f;
+  --color-btn-hover: #000000;
+  --color-ink: #1d1d1f;
+  --color-muted: #6e6e73;
+  --color-border: #e5e5ea;
+  /* Admin compatibility */
+  --color-deepCharcoal: #1d1d1f;
+  --color-roseGold: #a67c52;
+  --color-softPink: #f5f5f7;
+  --color-beige: #f5f5f7;
+  --font-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-script: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shadow-soft: 0 4px 24px rgba(43, 43, 43, 0.06);
+  --shadow-luxe: 0 20px 50px rgba(43, 43, 43, 0.1);
+  --shadow-card: 0 8px 32px rgba(43, 43, 43, 0.08);
+}
+
+/* Premium easing for luxury feel */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-slow: 0.8s;
+  --duration-medium: 0.5s;
+  --duration-fast: 0.3s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
 body {
-  @apply bg-beige text-deepCharcoal font-body antialiased;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.brand-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  line-height: 1;
+  min-width: 0;
+}
+
+/* Thin elegant script — “Sri Karthika” */
+.brand-script {
+  font-family: 'Allura', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: clamp(1.5rem, 3.4vw, 2.05rem);
+  font-weight: 400;
+  color: #1d1d1f;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Small spaced caps — “BRIDAL STUDIO” */
+.brand-tagline {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: clamp(0.5625rem, 1.35vw, 0.625rem);
+  font-weight: 600;
+  letter-spacing: clamp(0.16em, 0.45vw, 0.32em);
+  text-transform: uppercase;
+  color: #1d1d1f;
+  margin-top: 0.2rem;
+  line-height: 1.2;
 }
 
 .lux-container {
-  @apply max-w-6xl mx-auto px-4;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
 }
 
+.lux-container-wide {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 481px) {
+  .lux-container,
+  .lux-container-wide {
+    padding-inline: 1.5625rem; /* 25px */
+  }
+}
+
+@media (min-width: 1025px) {
+  .lux-container,
+  .lux-container-wide {
+    padding-inline: 2.5rem; /* 40px */
+  }
+}
+
+/* Generous section spacing for premium feel */
 .section-padding {
-  @apply py-16 md:py-24;
+  padding-top: clamp(5.5rem, 8vw, 6.25rem);
+  padding-bottom: clamp(5.5rem, 8vw, 6.25rem);
 }
 
+.section-padding-lg {
+  padding-top: clamp(6rem, 9vw, 6.75rem);
+  padding-bottom: clamp(6rem, 9vw, 6.75rem);
+}
+
+/* Cards: rounded corners, soft shadow, hover lift */
 .card-luxe {
-  @apply bg-white/80 backdrop-blur rounded-3xl shadow-luxe border border-white/60;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(229, 229, 234, 0.95);
+  transition: box-shadow var(--duration-medium) var(--ease-out-smooth);
 }
 
+.card-luxe:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Pill buttons with elegant hover */
 .btn-primary {
-  @apply inline-flex items-center justify-center px-6 py-3 rounded-full bg-roseGold text-white text-sm md:text-base font-medium tracking-wide shadow-md hover:bg-roseGold/90 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-luxe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-btn);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  transition: background-color var(--duration-medium) var(--ease-out-smooth),
+    transform 0.2s ease,
+    box-shadow var(--duration-medium) var(--ease-out-smooth);
+  min-height: 44px;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-btn-hover);
+  transform: scale(1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
 }
 
 .btn-outline {
-  @apply inline-flex items-center justify-center px-6 py-3 rounded-full border border-roseGold text-roseGold bg-transparent text-sm md:text-base font-medium tracking-wide hover:bg-roseGold hover:text-white transition-all duration-300;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9375rem 2.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-ink);
+  color: var(--color-ink);
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  transition: background-color var(--duration-medium) var(--ease-out-smooth),
+    color var(--duration-medium) var(--ease-out-smooth),
+    transform 0.2s ease;
+  min-height: 44px;
 }
 
+.btn-outline:hover {
+  background-color: var(--color-warmbeige);
+  color: var(--color-ink);
+  transform: scale(1.02);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.btn-outline:active {
+  transform: scale(0.97);
+}
+
+/* Typography hierarchy */
+
+/* Small label above section titles */
 .section-title {
-  @apply text-sm uppercase tracking-[0.35em] text-roseGold mb-3;
+  font-size: 0.6875rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+  font-weight: 500;
+  display: block;
 }
 
+/* Main section heading (serif) */
 .section-heading {
-  @apply font-display text-3xl md:text-4xl text-deepCharcoal mb-4;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  color: var(--color-ink);
+  margin-bottom: 1.4rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
 }
 
+/* Script/accent heading */
+.section-heading-script {
+  font-family: var(--font-script);
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  color: var(--color-ink);
+  line-height: 1.1;
+}
+
+/* Centered heading with decorative lines */
+.section-heading-luxe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.section-heading-luxe::before,
+.section-heading-luxe::after {
+  content: '';
+  flex: 1;
+  max-width: 6rem;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.section-heading-with-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.section-heading-with-line::before {
+  content: '';
+  width: 4rem;
+  height: 1px;
+  background-color: var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Lead / subtitle under section heading */
 .section-subtitle {
-  @apply text-sm md:text-base text-neutral-600 max-w-2xl;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-muted);
+  max-width: 40rem;
 }
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* Larger lead for hero or intro blocks */
+.lead-text {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.7;
+  color: var(--color-muted);
+}
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+.animate-fade-in-up {
+  animation: fadeInUp var(--duration-slow) var(--ease-out-smooth) forwards;
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+.nav-smooth {
+  transition: background-color 0.35s var(--ease-out-smooth), box-shadow 0.35s var(--ease-out-smooth),
+    border-color 0.35s var(--ease-out-smooth);
+}
+
+.nav-scrolled {
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.nav-link {
+  position: relative;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: left 100%;
+  transition: color 0.3s var(--ease-out-smooth), background-size 0.3s var(--ease-out-smooth);
+}
+
+.nav-link:hover {
+  background-size: 100% 1px;
+}
+
+/* Image hover zoom for gallery and service cards */
+.img-zoom-hover {
+  transition: transform 0.3s ease;
+}
+
+.img-zoom-hover:hover {
+  transform: scale(1.03);
+}
+
+.media-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.bridal-showcase-img {
+  transition: transform 0.3s ease;
+}
+
+.bridal-showcase-img:hover {
+  transform: scale(1.03);
+}
+
+.img-depth-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.img-depth-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(43, 43, 43, 0.24), transparent 45%);
+  opacity: 0.18;
+  transition: opacity 0.35s var(--ease-out-smooth);
+  pointer-events: none;
+}
+
+.img-depth-wrap:hover::after {
+  opacity: 0.3;
+}
+
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: opacity 0.5s var(--ease-out-smooth), visibility 0.5s var(--ease-out-smooth);
+}
+
+.loading-screen.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loading-brand {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  letter-spacing: 0.14em;
+  color: var(--color-ink);
+  animation: fadeInUp 0.8s var(--ease-out-smooth);
+}
+
+.whatsapp-fab {
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  .whatsapp-fab {
+    left: max(1.5rem, env(safe-area-inset-left));
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}

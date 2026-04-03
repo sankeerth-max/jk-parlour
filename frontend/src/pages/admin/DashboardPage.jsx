@@ -10,7 +10,7 @@ function DashboardPage({ apiBase }) {
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) return;
+    if (!token || !apiBase) return;
 
     const fetchStats = async () => {
       try {

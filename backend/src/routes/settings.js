@@ -12,9 +12,10 @@ router.get('/', async (req, res) => {
         {},
         {
           $setOnInsert: {
-            address: 'Your studio address here',
+            address:
+              'First Floor, Sunthara Vinayagar Kovil Street, Near Ulavar Santhai, Kallakurichi, Tamil Nadu 606202',
             phone: '00000 00000',
-            whatsapp: '00000 00000',
+            whatsapp: '918072965181',
             instagram: 'https://www.instagram.com/jk.makeoverartistry',
             email: 'sivanga285@gmail.com',
             workingHours: '9:30 AM – 8:00 PM',

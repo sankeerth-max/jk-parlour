@@ -7,6 +7,7 @@ function AppointmentsAdminPage({ apiBase }) {
   const [filterDate, setFilterDate] = useState('');
 
   const load = async () => {
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     const qs = filterDate ? `?date=${filterDate}` : '';
@@ -18,10 +19,12 @@ function AppointmentsAdminPage({ apiBase }) {
   };
 
   useEffect(() => {
+    if (!apiBase) return;
     load().catch(() => {});
   }, [apiBase, filterDate]);
 
   const updateStatus = async (id, status) => {
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     await fetch(`${apiBase}/appointments/${id}/status`, {

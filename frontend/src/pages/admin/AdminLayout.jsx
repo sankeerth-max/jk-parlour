@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { REST_API_BASE } from '../../config/api.js';
 
 function useAuth() {
   const token = localStorage.getItem('adminToken');
@@ -74,6 +75,16 @@ function AdminLayout() {
           </button>
         </div>
         <div className="lux-container py-6">
+          {!REST_API_BASE && (
+            <div
+              className="mb-6 rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+              role="status"
+            >
+              Admin API URL is not configured. Set{' '}
+              <code className="rounded bg-amber-100/80 px-1.5 py-0.5 font-mono text-xs">VITE_API_BASE</code>{' '}
+              in your build environment to load and save data.
+            </div>
+          )}
           <Outlet />
         </div>
       </main>

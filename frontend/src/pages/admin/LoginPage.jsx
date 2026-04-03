@@ -15,6 +15,10 @@ function LoginPage({ apiBase }) {
       setError('Enter email and password.');
       return;
     }
+    if (!apiBase) {
+      setError('Admin API URL is not set. Add VITE_API_BASE to your environment.');
+      return;
+    }
     try {
       setLoading(true);
       const res = await fetch(`${apiBase}/auth/login`, {

@@ -12,6 +12,7 @@ function SettingsAdminPage({ apiBase }) {
   const [saved, setSaved] = useState(false);
 
   const load = async () => {
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     const res = await fetch(`${apiBase}/settings`, {
@@ -29,6 +30,7 @@ function SettingsAdminPage({ apiBase }) {
   };
 
   useEffect(() => {
+    if (!apiBase) return;
     load().catch(() => {});
   }, [apiBase]);
 
@@ -39,6 +41,7 @@ function SettingsAdminPage({ apiBase }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!apiBase) return;
     const token = localStorage.getItem('adminToken');
     if (!token) return;
     setSaved(false);
@@ -90,6 +93,7 @@ function SettingsAdminPage({ apiBase }) {
               name="whatsapp"
               value={settings.whatsapp}
               onChange={handleChange}
+              placeholder="8072965181 or 918072965181"
               className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
             />
           </div>
