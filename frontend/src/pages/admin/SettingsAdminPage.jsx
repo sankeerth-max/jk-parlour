@@ -1,58 +1,27 @@
 import { useEffect, useState } from 'react';
+import {
+  loadSettings,
+  persistSettings,
+  notifySettingsUpdated,
+} from '../../lib/settingsStorage.js';
 
-function SettingsAdminPage({ apiBase }) {
-  const [settings, setSettings] = useState({
-    address: '',
-    phone: '',
-    whatsapp: '',
-    instagram: '',
-    email: '',
-    workingHours: '',
-  });
+export default function SettingsAdminPage() {
+  const [settings, setSettings] = useState(() => loadSettings());
   const [saved, setSaved] = useState(false);
 
-  const load = async () => {
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    const res = await fetch(`${apiBase}/settings`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setSettings({
-      address: data.address || '',
-      phone: data.phone || '',
-      whatsapp: data.whatsapp || '',
-      instagram: data.instagram || '',
-      email: data.email || '',
-      workingHours: data.workingHours || '',
-    });
-  };
-
   useEffect(() => {
-    if (!apiBase) return;
-    load().catch(() => {});
-  }, [apiBase]);
+    setSettings(loadSettings());
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    setSaved(false);
-    await fetch(`${apiBase}/settings`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(settings),
-    });
+    persistSettings(settings);
+    notifySettingsUpdated();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -62,7 +31,7 @@ function SettingsAdminPage({ apiBase }) {
       <div>
         <h1 className="font-display text-2xl text-deepCharcoal mb-1">Website Settings</h1>
         <p className="text-xs text-neutral-600">
-          Update studio contact details, social links, and working hours shown on the site.
+          Update studio contact details, social links, and working hours shown on the site. Saved on this device.
         </p>
       </div>
 
@@ -137,6 +106,3 @@ function SettingsAdminPage({ apiBase }) {
     </div>
   );
 }
-
-export default SettingsAdminPage;
-

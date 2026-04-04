@@ -2,14 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? 'AIzaSyCf8GCBzbAeoT4SgTkmgLhFHqginWhh4VE',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? 'sri-karthika-bridal-studio.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'sri-karthika-bridal-studio',
-  storageBucket:
-    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? 'sri-karthika-bridal-studio.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '746492450266',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? '1:746492450266:web:d3fb9e4451812ddec11ce3',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ?? 'G-2SV8MHHZV1',
+  apiKey: 'AIzaSyCkHybsBP1Y1AWuMA2SqD8OZuEkfeE3YA',
+  authDomain: 'jk-bridal.firebaseapp.com',
+  projectId: 'jk-bridal',
+  storageBucket: 'jk-bridal.firebasestorage.app',
+  messagingSenderId: '1095862592619',
+  appId: '1:1095862592619:web:1ec4fc0d4967e4c5dcfd2e',
 };
 
 const app = initializeApp(firebaseConfig);

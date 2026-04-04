@@ -1,117 +1,162 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { whatsappWaMeDigits } from '../constants/contact.js';
-import {
-  loadServices,
-  SERVICES_UPDATED_EVENT,
-} from '../lib/servicesStorage.js';
+import { AnimatePresence, motion } from 'framer-motion';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase.js';
+import { useBookingModal } from '../context/BookingModalContext.jsx';
 
-function buildServiceWhatsAppUrl(serviceName, settingsWhatsapp) {
-  const text = `Hello, I would like to book ${serviceName} at Sri Karthika Bridal Studio. Please share details.`;
-  const digits = whatsappWaMeDigits(settingsWhatsapp);
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+const SERVICES_COLLECTION = 'services';
+const PLACEHOLDER_IMAGE = '/services-makeup.jpg';
+
+function millisFromCreatedAt(createdAt) {
+  if (!createdAt) return 0;
+  if (typeof createdAt.toMillis === 'function') return createdAt.toMillis();
+  if (typeof createdAt.seconds === 'number') return createdAt.seconds * 1000;
+  return 0;
 }
 
-function ServicesPage({ settings }) {
-  const [services, setServices] = useState(() => loadServices());
+function normalizeDetails(raw) {
+  if (!raw || !Array.isArray(raw)) return [];
+  return raw.map((x) => String(x).trim()).filter(Boolean);
+}
+
+function mapServiceDocs(snapshot) {
+  const rows = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
+    const priceRaw = data.price;
+    const price =
+      typeof priceRaw === 'number' && !Number.isNaN(priceRaw)
+        ? priceRaw
+        : Number(priceRaw) || 0;
+    const image = String(data.image ?? '').trim();
+    return {
+      id: docSnap.id,
+      title: String(data.title ?? ''),
+      description: String(data.description ?? ''),
+      price,
+      image,
+      details: normalizeDetails(data.details),
+      createdAt: data.createdAt ?? null,
+    };
+  });
+  rows.sort((a, b) => millisFromCreatedAt(b.createdAt) - millisFromCreatedAt(a.createdAt));
+  return rows;
+}
+
+function formatStartingFromRupee(price) {
+  const n = typeof price === 'number' && !Number.isNaN(price) ? price : Number(price) || 0;
+  const num = new Intl.NumberFormat('en-IN', {
+    maximumFractionDigits: n % 1 === 0 ? 0 : 2,
+  }).format(n);
+  return `Starting from ₹${num}`;
+}
+
+function detailLinesForService(service) {
+  if (service.details.length > 0) return service.details;
+  const fromDesc = String(service.description ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return fromDesc.length ? fromDesc : ['Contact us for package details.'];
+}
+
+export default function ServicesPage() {
+  const { openBookingModal } = useBookingModal();
+  const [services, setServices] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    const sync = () => {
-      setServices(loadServices());
-      setExpandedId(null);
-    };
-    window.addEventListener('storage', sync);
-    window.addEventListener(SERVICES_UPDATED_EVENT, sync);
-    return () => {
-      window.removeEventListener('storage', sync);
-      window.removeEventListener(SERVICES_UPDATED_EVENT, sync);
-    };
+    const colRef = collection(db, SERVICES_COLLECTION);
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => {
+        setServices(mapServiceDocs(snapshot));
+      },
+      () => {
+        setServices([]);
+      }
+    );
+    return () => unsubscribe();
   }, []);
 
-  const openWhatsAppBook = (serviceName) => {
-    const url = buildServiceWhatsAppUrl(serviceName, settings?.whatsapp);
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
   return (
-    <div className="min-h-screen bg-white">
-      <section className="bg-white pt-[84px] sm:pt-[92px] md:pt-[100px] pb-[48px] sm:pb-[56px] md:pb-[60px] px-4 sm:px-6 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1200px] flex flex-col items-center">
-          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#6E6E73] mb-5 text-center">
-            OUR SERVICES
+    <section className="section-padding-lg bg-cream min-h-screen">
+      <div className="lux-container max-w-7xl mx-auto">
+        <div className="text-center md:text-left mb-12 md:mb-16">
+          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-muted mb-3">
+            Our Services
           </p>
-          <div className="w-full max-w-2xl text-left">
-            <h1
-              className="text-[2rem] sm:text-4xl md:text-[2.75rem] font-bold text-[#1D1D1F] leading-[1.1] tracking-[-0.02em] mb-4 ml-2 sm:ml-5 md:ml-8"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              Beauty Services at a Glance
-            </h1>
-            <p className="text-[15px] sm:text-base text-[#6E6E73] leading-relaxed max-w-xl ml-auto text-right">
-              Curated treatments, premium products, flawless results.
-            </p>
-          </div>
+          <h1
+            className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-ink tracking-tight mb-4"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Signature treatments
+          </h1>
+          <p className="text-muted text-sm sm:text-base max-w-2xl mx-auto md:mx-0 leading-relaxed">
+            Curated beauty experiences with premium products and a calm, refined studio atmosphere.
+          </p>
         </div>
-      </section>
 
-      <div className="h-px max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 bg-[#E5E5E5]" aria-hidden="true" />
+        {services.length === 0 ? (
+          <p className="text-center text-muted py-16 text-sm">No services available at the moment.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+            {services.map((service) => {
+              const imgSrc = service.image || PLACEHOLDER_IMAGE;
+              const isOpen = expandedId === service.id;
+              const lines = detailLinesForService(service);
 
-      <section className="bg-white pb-20 md:pb-24 pt-10 md:pt-12 px-4 sm:px-6 md:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[35px] items-stretch">
-            {services.map((service, index) => {
-              const rowKey = service.id ?? service.title;
-              const isOpen = expandedId === rowKey;
               return (
                 <motion.article
-                  key={rowKey}
-                  initial={{ opacity: 0, y: 24 }}
+                  key={service.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.12 }}
-                  transition={{ duration: 0.45, delay: Math.min(index * 0.05, 0.3), ease: [0.22, 1, 0.36, 1] }}
-                  className="group flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] bg-white shadow-[0_10px_25px_rgba(0,0,0,0.05)] transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(0,0,0,0.1)]"
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-12px_rgba(29,29,31,0.15)] ring-1 ring-ink/[0.06] hover:shadow-[0_20px_50px_-16px_rgba(29,29,31,0.18)] transition-shadow duration-300"
                 >
-                  <div className="relative h-[200px] w-full shrink-0 overflow-hidden rounded-t-[20px]">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-warmbeige">
                     <img
-                      src={service.image}
+                      src={imgSrc}
                       alt=""
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = PLACEHOLDER_IMAGE;
+                      }}
+                      className="h-full w-full object-cover object-center"
                       loading="lazy"
-                      className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/[0.12] via-transparent to-transparent"
-                      aria-hidden="true"
                     />
                   </div>
 
-                  <div className="flex flex-1 flex-col p-5 text-left">
+                  <div className="flex flex-1 flex-col p-6 sm:p-7 text-left">
                     <h2
-                      className="text-lg font-bold text-[#1D1D1F] leading-snug"
+                      className="text-lg font-semibold text-ink leading-snug mb-2"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
                       {service.title}
                     </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-[#6E6E73] line-clamp-2">{service.description}</p>
-                    <p className="mt-3 text-sm font-medium text-[#C89B3C]">Starting from {service.startsFrom}</p>
+                    <p className="text-sm text-muted leading-relaxed line-clamp-3 mb-4">
+                      {service.description}
+                    </p>
+                    <p className="text-sm font-medium text-champagne mb-5">
+                      {formatStartingFromRupee(service.price)}
+                    </p>
 
-                    <div className="mt-5 flex flex-1 flex-col gap-3">
-                      <motion.button
-                        type="button"
-                        onClick={() => openWhatsAppBook(service.title)}
-                        className="w-full rounded-full bg-black px-5 py-2.5 text-[13px] font-medium text-white shadow-sm"
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        Book Now
-                      </motion.button>
+                    <div className="mt-auto flex flex-col gap-3">
                       <button
                         type="button"
-                        onClick={() => setExpandedId(isOpen ? null : rowKey)}
-                        className="self-start text-[13px] font-medium text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
+                        onClick={() => openBookingModal(service.title)}
+                        className="w-full rounded-full bg-[#1d1d1f] px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition-colors duration-200"
                       >
-                        View Details
+                        Book Now
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isOpen ? null : service.id)}
+                        className="self-start text-sm font-medium text-muted hover:text-ink transition-colors"
+                        aria-expanded={isOpen}
+                      >
+                        {isOpen ? 'Hide details' : 'View Details'}
                       </button>
                     </div>
 
@@ -124,13 +169,13 @@ function ServicesPage({ settings }) {
                           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                           className="overflow-hidden"
                         >
-                          <ul className="mt-4 space-y-2 border-t border-[#F0F0F0] pt-4 text-[13px] text-[#6E6E73]">
-                            {service.details.map((item, i) => (
-                              <li key={`${rowKey}-d-${i}`} className="flex gap-2">
-                                <span className="text-[#C89B3C]" aria-hidden="true">
+                          <ul className="mt-4 space-y-2 border-t border-border pt-4 text-sm text-muted">
+                            {lines.map((line, idx) => (
+                              <li key={`${service.id}-d-${idx}`} className="flex gap-2 pl-0.5">
+                                <span className="text-champagne shrink-0" aria-hidden>
                                   ·
                                 </span>
-                                <span>{item}</span>
+                                <span>{line}</span>
                               </li>
                             ))}
                           </ul>
@@ -142,10 +187,8 @@ function ServicesPage({ settings }) {
               );
             })}
           </div>
-        </div>
-      </section>
-    </div>
+        )}
+      </div>
+    </section>
   );
 }
-
-export default ServicesPage;

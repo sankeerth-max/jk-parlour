@@ -25,23 +25,9 @@ import LoginPage from "./pages/LoginPage.jsx";
 import TestimonialsAdminPage from './pages/admin/TestimonialsAdminPage.jsx';
 import PremiumFooter from './components/PremiumFooter.jsx';
 import { BookingModalProvider, useBookingModal } from './context/BookingModalContext.jsx';
-import {
-  whatsappWaMeUrl,
-  STUDIO_ADDRESS,
-  SALON_EMAIL,
-  WHATSAPP_WA_ME_DEFAULT,
-} from './constants/contact.js';
-import { REST_API_BASE, USE_REST_API } from './config/api.js';
-
-/** Same shape as GET /api/settings — used until API responds */
-const DEFAULT_SETTINGS = {
-  address: STUDIO_ADDRESS,
-  phone: '',
-  whatsapp: WHATSAPP_WA_ME_DEFAULT,
-  instagram: 'https://www.instagram.com/jk.makeoverartistry',
-  email: SALON_EMAIL,
-  workingHours: '9:30 AM – 8:00 PM',
-};
+import { whatsappWaMeUrl } from './constants/contact.js';
+import { REST_API_BASE } from './config/api.js';
+import { loadSettings, SETTINGS_UPDATED_EVENT } from './lib/settingsStorage.js';
 
 function ProtectedRoute({ children }) {
   if (localStorage.getItem('isAdmin') !== 'true') {
@@ -172,21 +158,19 @@ function NavHeader() {
 }
 
 function AppLayout() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(() => loadSettings());
   const [showLoader, setShowLoader] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
-    if (!USE_REST_API) return undefined;
-    const ac = new AbortController();
-    fetch(`${REST_API_BASE}/settings`, { signal: ac.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Settings ${res.status}`);
-        return res.json();
-      })
-      .then((data) => setSettings((prev) => ({ ...prev, ...data })))
-      .catch(() => {});
-    return () => ac.abort();
+    const sync = () => setSettings(loadSettings());
+    sync();
+    window.addEventListener(SETTINGS_UPDATED_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(SETTINGS_UPDATED_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -207,8 +191,8 @@ function AppLayout() {
           <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/services" element={<ServicesPage settings={settings} />} />
-          <Route path="/gallery" element={<GalleryPage apiBase={REST_API_BASE} />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/book" element={<BookingPage apiBase={REST_API_BASE} settings={settings} />} />
           <Route path="/contact" element={<ContactPage settings={settings} />} />
           <Route path="/admin/login" element={<LoginPage />} />
@@ -221,11 +205,11 @@ function AppLayout() {
             }
           >
             <Route index element={<DashboardPage apiBase={REST_API_BASE} />} />
-            <Route path="services" element={<ServicesAdminPage apiBase={REST_API_BASE} />} />
+            <Route path="services" element={<ServicesAdminPage />} />
             <Route path="offers" element={<OffersAdminPage apiBase={REST_API_BASE} />} />
-            <Route path="gallery" element={<GalleryAdminPage apiBase={REST_API_BASE} />} />
+            <Route path="gallery" element={<GalleryAdminPage />} />
             <Route path="appointments" element={<AppointmentsAdminPage apiBase={REST_API_BASE} />} />
-            <Route path="settings" element={<SettingsAdminPage apiBase={REST_API_BASE} />} />
+            <Route path="settings" element={<SettingsAdminPage />} />
             <Route path="testimonials" element={<TestimonialsAdminPage apiBase={REST_API_BASE} />} />
           </Route>
           </Routes>
