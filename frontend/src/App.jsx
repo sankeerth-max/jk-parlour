@@ -28,6 +28,7 @@ import { BookingModalProvider, useBookingModal } from './context/BookingModalCon
 import { whatsappWaMeUrl } from './constants/contact.js';
 import { REST_API_BASE } from './config/api.js';
 import { loadSettings, SETTINGS_UPDATED_EVENT } from './lib/settingsStorage.js';
+import { seedSalonServicesIfEmpty } from './lib/seedSalonServices.js';
 
 function ProtectedRoute({ children }) {
   if (localStorage.getItem('isAdmin') !== 'true') {
@@ -176,6 +177,10 @@ function AppLayout() {
   useEffect(() => {
     const timer = setTimeout(() => setShowLoader(false), 1200);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    seedSalonServicesIfEmpty().catch(() => {});
   }, []);
 
   return (

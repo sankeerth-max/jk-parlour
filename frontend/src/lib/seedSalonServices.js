@@ -1,0 +1,152 @@
+import { addDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase.js';
+
+const SERVICES_COLLECTION = 'services';
+
+/** Default catalog — inserted only when `services` is empty */
+const SALON_SERVICES_SEED = [
+  {
+    title: 'Hair Services',
+    description:
+      'Precision cuts, styling, and restorative care in a calm salon setting.',
+    price: 150,
+    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9',
+    details: [
+      'Hair Cut (Layer / Step / U Cut)',
+      'Hair Styling (Blow Dry, Curls, Straightening)',
+      'Hair Spa (Repair & Nourishment)',
+      'Hair Smoothening & Straightening',
+      'Hair Coloring (Global, Highlights, Balayage)',
+      'Keratin & Hair Botox Treatments',
+      'Scalp Treatments (Hair Fall & Dandruff Control)',
+    ],
+  },
+  {
+    title: 'Skin Care',
+    description: 'Glow-focused facials and rituals tailored to your skin.',
+    price: 300,
+    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03',
+    details: [
+      'Basic Cleanup',
+      'Fruit Facial',
+      'Gold Facial',
+      'Anti-Aging Treatments',
+      'Acne Treatment Facial',
+      'De-tan Treatment',
+      'Hydrating & Glow Therapy',
+    ],
+  },
+  {
+    title: 'Makeup & Makeovers',
+    description: 'Soft glam and event-ready looks with a refined, natural finish.',
+    price: 3000,
+    image: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8',
+    details: [
+      'Party Makeup',
+      'Engagement Makeup',
+      'HD Makeup',
+      'Airbrush Makeup',
+      'Natural Glam Look',
+      'Reception Makeup',
+      'Photoshoot Makeup',
+    ],
+  },
+  {
+    title: 'Nail Care',
+    description: 'Manicure and pedicure care for polished, healthy nails.',
+    price: 100,
+    image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371',
+    details: [
+      'Manicure',
+      'Pedicure',
+      'Gel Nail Polish',
+      'Nail Art',
+      'French Tips',
+      'Nail Extension',
+      'Nail Repair',
+    ],
+  },
+  {
+    title: 'Waxing',
+    description: 'Smooth, hygienic waxing from face to body.',
+    price: 80,
+    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a',
+    details: [
+      'Full Arms Wax',
+      'Full Legs Wax',
+      'Underarm Wax',
+      'Face Wax',
+      'Full Body Wax',
+      'Rica Wax',
+      'Chocolate Wax',
+    ],
+  },
+  {
+    title: 'Mehandi Services',
+    description: 'Intricate henna designs for weddings, festivals, and special occasions.',
+    price: 500,
+    image: 'https://images.unsplash.com/photo-1528164344705-47542687000d',
+    details: [
+      'Bridal Mehandi',
+      'Party & Guest Mehandi',
+      'Arabic & Indo-Arabic Styles',
+      'Traditional Motifs',
+      'Leg & Full Hand Designs',
+      'Aftercare Guidance',
+    ],
+  },
+  {
+    title: 'Bridal Services',
+    description: 'Complete bridal looks with premium finishing for your celebration.',
+    price: 4999,
+    image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702',
+    details: [
+      'Bridal Makeup',
+      'Bridal Hairstyling',
+      'Saree Draping',
+      'Pre-Bridal Skincare',
+      'Trial Makeup Session',
+      'Jewelry Setting',
+      'Complete Bridal Package',
+    ],
+  },
+];
+
+/**
+ * Serialized queue so React Strict Mode / parallel calls cannot run two
+ * empty-collection seeds at once (which would duplicate every document).
+ */
+let seedTail = Promise.resolve();
+
+/**
+ * If `services` has no documents, inserts the default salon catalog.
+ * Safe to call on every app load — skips when data already exists.
+ * @returns {Promise<{ seeded: boolean, skipped: boolean }>}
+ */
+export function seedSalonServicesIfEmpty() {
+  const work = async () => {
+    const colRef = collection(db, SERVICES_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    if (!snapshot.empty) {
+      return { seeded: false, skipped: true };
+    }
+
+    for (const row of SALON_SERVICES_SEED) {
+      await addDoc(colRef, {
+        title: row.title,
+        description: row.description,
+        price: row.price,
+        image: row.image,
+        details: row.details,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    console.log('Services Seeded Successfully');
+    return { seeded: true, skipped: false };
+  };
+
+  const p = seedTail.then(() => work());
+  seedTail = p.catch(() => {});
+  return p;
+}
