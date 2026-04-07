@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Gallery uploads from admin UI.
+    match /gallery/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Block everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
