@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, storage } from '../../firebase.js';
+import { db, getFirebaseStorage } from '../../firebase.js';
 import { GALLERY_CATEGORIES } from '../../constants/galleryCategories.js';
 
 const GALLERY_COLLECTION = 'gallery';
@@ -52,6 +52,7 @@ export default function GalleryAdminPage() {
     }
     try {
       setIsUploading(true);
+      const storage = getFirebaseStorage();
       const safeName = selectedFile.name.replace(/\s+/g, '-').toLowerCase();
       const fileRef = ref(storage, `gallery/${Date.now()}-${safeName}`);
       await uploadBytes(fileRef, selectedFile);
