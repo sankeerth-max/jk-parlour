@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { whatsappWaMeDigits } from '../constants/contact.js';
+import { WHATSAPP_STANDARD_MESSAGE, whatsappWaMeUrl } from '../constants/contact.js';
 import { BOOKING_SERVICE_OPTIONS } from '../constants/bookingModalOptions.js';
 
 const TIME_OPTIONS = ['10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '6:00 PM'];
@@ -11,24 +11,7 @@ const inputClass =
 
 const labelClass = 'block text-[11px] font-medium uppercase tracking-[0.12em] text-[#6E6E73] mb-2';
 
-function buildWhatsAppMessage({ service, date, time, name, phone }) {
-  return `Hi Sri Karthika Bridal Studio,
-
-I would like to book an appointment:
-
-Service: ${service}
-Date: ${date}
-Time: ${time}
-
-Name: ${name}
-Phone: ${phone}
-
-Please confirm availability.`;
-}
-
 export default function WhatsAppBookingModal({ open, onClose, initialService, settingsWhatsapp }) {
-  const whatsappDigits = whatsappWaMeDigits(settingsWhatsapp);
-
   const [service, setService] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -89,8 +72,7 @@ export default function WhatsAppBookingModal({ open, onClose, initialService, se
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    const text = buildWhatsAppMessage({ service, date, time, name, phone });
-    const url = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(text)}`;
+    const url = whatsappWaMeUrl(settingsWhatsapp, WHATSAPP_STANDARD_MESSAGE);
     window.open(url, '_blank', 'noopener,noreferrer');
     setTimeout(() => {
       setLoading(false);

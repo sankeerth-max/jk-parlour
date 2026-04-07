@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.js';
 import { mapVisibleServicesFromSnapshot } from '../lib/serviceDocuments.js';
+import { WHATSAPP_STANDARD_MESSAGE, whatsappWaMeUrl } from '../constants/contact.js';
 
 const SERVICE_OPTIONS = [
   'Threading',
@@ -139,30 +140,7 @@ function BookingPage() {
       return;
     }
 
-    const whatsappText = `Hello 👋
-I would like to book an appointment at *Sri Karthika Bridal Studio*.
-
-*Customer Details*
-Name: ${form.name}
-Phone: ${form.phone}
-Email: ${form.email || '-'}
-
-*Service Details*
-Service: ${form.service}
-Category: ${form.category || 'General Services'}
-Price: ₹${form.price || '-'}
-
-*Appointment Details*
-Date: ${form.date}
-Time: ${form.timeSlot}
-
-*Additional Message*
-${form.message || '-'}
-
-Please confirm my booking. Thank you 😊`;
-
-    const encodedMessage = encodeURIComponent(whatsappText);
-    const url = `https://api.whatsapp.com/send?phone=918072965181&text=${encodedMessage}`;
+    const url = whatsappWaMeUrl('918072965181', WHATSAPP_STANDARD_MESSAGE);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

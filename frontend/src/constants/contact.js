@@ -1,9 +1,11 @@
 /**
  * Main salon WhatsApp (India).
- * Display: local 10-digit. wa.me: country code + number, digits only.
+ * Display: local 10-digit. API URL uses country code + number, digits only.
  */
 export const WHATSAPP_DISPLAY = '8072965181';
 export const WHATSAPP_WA_ME_DEFAULT = '918072965181';
+export const WHATSAPP_STANDARD_MESSAGE =
+  'Hello, I would like to book an appointment at Sri Karthika Bridal Studio';
 
 /** Public salon email (also used when settings.email is empty) */
 export const SALON_EMAIL = 'sivanga285@gmail.com';
@@ -12,7 +14,7 @@ export const SALON_EMAIL = 'sivanga285@gmail.com';
 export const STUDIO_ADDRESS =
   'First Floor, Sunthara Vinayagar Kovil Street, Near Ulavar Santhai, Kallakurichi, Tamil Nadu 606202';
 
-/** Digits only for wa.me (e.g. 918072965181) */
+/** Digits only for WhatsApp API (e.g. 918072965181) */
 export function whatsappWaMeDigits(custom) {
   const raw = String(custom ?? WHATSAPP_WA_ME_DEFAULT).replace(/\D/g, '');
   if (!raw) return WHATSAPP_WA_ME_DEFAULT;
@@ -20,11 +22,13 @@ export function whatsappWaMeDigits(custom) {
   return raw;
 }
 
-export function whatsappWaMeUrl(custom) {
-  return `https://wa.me/${whatsappWaMeDigits(custom)}`;
+export function whatsappWaMeUrl(custom, message = WHATSAPP_STANDARD_MESSAGE) {
+  const phone = whatsappWaMeDigits(custom);
+  const text = encodeURIComponent(message);
+  return `https://api.whatsapp.com/send?phone=${phone}&text=${text}`;
 }
 
-/** Local 10-digit Indian number string derived from WhatsApp / wa.me digits */
+/** Local 10-digit Indian number string derived from WhatsApp digits */
 export function whatsappLocalNumber(custom) {
   const d = whatsappWaMeDigits(custom);
   if (d.length >= 10) return d.slice(-10);
