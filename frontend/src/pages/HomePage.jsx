@@ -88,16 +88,35 @@ function HomePage() {
   };
 
   useEffect(() => {
-    const testimonialsRef = collection(db, 'testimonials');
-    const unsub = onSnapshot(
-      testimonialsRef,
-      (snapshot) => {
-        const rows = mapTestimonialsSnapshot(snapshot);
-        setTestimonials(rows.length ? rows : DEFAULT_TESTIMONIALS);
-      },
-      () => setTestimonials(DEFAULT_TESTIMONIALS)
-    );
-    return () => unsub();
+    let unsub = null;
+
+    const attach = () => {
+      if (!navigator.onLine) {
+        setTestimonials(DEFAULT_TESTIMONIALS);
+        return;
+      }
+      const testimonialsRef = collection(db, 'testimonials');
+      unsub = onSnapshot(
+        testimonialsRef,
+        (snapshot) => {
+          const rows = mapTestimonialsSnapshot(snapshot);
+          setTestimonials(rows.length ? rows : DEFAULT_TESTIMONIALS);
+        },
+        () => setTestimonials(DEFAULT_TESTIMONIALS)
+      );
+    };
+
+    attach();
+    const handleOnline = () => {
+      if (unsub) unsub();
+      attach();
+    };
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      if (unsub) unsub();
+    };
   }, []);
 
   return (

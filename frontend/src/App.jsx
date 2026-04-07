@@ -164,16 +164,35 @@ function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    const settingsRef = doc(db, 'siteSettings', 'main');
-    const unsub = onSnapshot(
-      settingsRef,
-      (snap) => {
-        const data = snap.data() || {};
-        setSettings({ ...DEFAULT_SITE_SETTINGS, ...data });
-      },
-      () => setSettings(DEFAULT_SITE_SETTINGS)
-    );
-    return () => unsub();
+    let unsub = null;
+
+    const attach = () => {
+      if (!navigator.onLine) {
+        setSettings(DEFAULT_SITE_SETTINGS);
+        return;
+      }
+      const settingsRef = doc(db, 'siteSettings', 'main');
+      unsub = onSnapshot(
+        settingsRef,
+        (snap) => {
+          const data = snap.data() || {};
+          setSettings({ ...DEFAULT_SITE_SETTINGS, ...data });
+        },
+        () => setSettings(DEFAULT_SITE_SETTINGS)
+      );
+    };
+
+    attach();
+    const handleOnline = () => {
+      if (unsub) unsub();
+      attach();
+    };
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      if (unsub) unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -213,6 +232,7 @@ function AppLayout() {
           >
             <Route index element={<DashboardPage apiBase={REST_API_BASE} />} />
             <Route path="services" element={<ServicesAdminPage />} />
+            <Route path="offers" element={<Navigate to="/admin/services" replace />} />
             <Route path="gallery" element={<GalleryAdminPage />} />
             <Route path="settings" element={<SettingsAdminPage />} />
             <Route path="testimonials" element={<TestimonialsAdminPage />} />
