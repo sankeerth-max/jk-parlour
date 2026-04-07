@@ -29,7 +29,6 @@ function AdminLayout() {
           {[
             { to: '/admin', label: 'Dashboard' },
             { to: '/admin/services', label: 'Services' },
-            { to: '/admin/offers', label: 'Offers' },
             { to: '/admin/gallery', label: 'Gallery' },
             { to: '/admin/testimonials', label: 'Testimonials' },
             { to: '/admin/settings', label: 'Website Settings' },

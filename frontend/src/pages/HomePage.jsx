@@ -5,7 +5,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { useBookingModal } from '../context/BookingModalContext.jsx';
 import SitePreFooterCta from '../components/SitePreFooterCta.jsx';
 import { db } from '../firebase.js';
-import { DEFAULT_TESTIMONIALS, mapOffersSnapshot, mapTestimonialsSnapshot } from '../lib/realtimeContent.js';
+import { DEFAULT_TESTIMONIALS, mapTestimonialsSnapshot } from '../lib/realtimeContent.js';
 
 const CATEGORY_COLLECTIONS = [
   {
@@ -79,7 +79,6 @@ const SERVICE_PREVIEW = [
 function HomePage() {
   const { openBookingModal } = useBookingModal();
   const [selectedBridalImage, setSelectedBridalImage] = useState(null);
-  const [offers, setOffers] = useState([]);
   const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
   const sectionAnimation = {
     initial: { opacity: 0, y: 30 },
@@ -87,19 +86,6 @@ function HomePage() {
     viewport: { once: true, amount: 0.2 },
     transition: { duration: 0.5 },
   };
-
-  useEffect(() => {
-    const offersRef = collection(db, 'offers');
-    const unsub = onSnapshot(
-      offersRef,
-      (snapshot) => {
-        const active = mapOffersSnapshot(snapshot).filter((o) => o.isActive);
-        setOffers(active);
-      },
-      () => setOffers([])
-    );
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     const testimonialsRef = collection(db, 'testimonials');
@@ -515,36 +501,6 @@ function HomePage() {
           </div>
         </div>
       </motion.section>
-
-      {offers.length > 0 && (
-        <motion.section className="section-padding-lg bg-white" {...sectionAnimation}>
-          <div className="lux-container">
-            <p className="section-title text-center">Offers</p>
-            <h2 className="section-heading text-center mb-8" style={{ fontFamily: 'var(--font-display)' }}>
-              Current Offers
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-              {offers.map((o) => (
-                <div key={o.id} className="media-frame bg-white border border-border/70 p-7">
-                  <p className="text-xs uppercase tracking-[0.22em] text-muted mb-3">Special Offer</p>
-                  <h3 className="text-xl text-ink mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    {o.title}
-                  </h3>
-                  {o.discountPercentage > 0 && (
-                    <p className="text-champagne font-medium text-sm mb-2">{o.discountPercentage}% OFF</p>
-                  )}
-                  {o.description && <p className="text-sm text-muted leading-relaxed">{o.description}</p>}
-                  {(o.startDate || o.endDate) && (
-                    <p className="text-xs text-muted mt-3">
-                      {o.startDate || 'Now'} - {o.endDate || 'Limited time'}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-      )}
 
       {/* Instagram */}
       <motion.section className="section-padding-lg bg-cream" {...sectionAnimation}>

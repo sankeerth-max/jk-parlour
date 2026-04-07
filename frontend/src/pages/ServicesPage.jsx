@@ -52,6 +52,11 @@ function ServiceCard({ service, isOpen, onToggleDetails, onBook }) {
       </div>
 
       <div className="flex flex-1 flex-col p-6 sm:p-7 text-left">
+        {service.offerPercentage > 0 && (
+          <p className="inline-flex self-start items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 text-[11px] font-medium mb-3">
+            🔥 {service.offerPercentage}% OFF
+          </p>
+        )}
         <h2
           className="text-lg font-semibold text-ink leading-snug mb-2"
           style={{ fontFamily: 'var(--font-display)' }}

@@ -18,7 +18,6 @@ import ContactPage from './pages/ContactPage.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import DashboardPage from './pages/admin/DashboardPage.jsx';
 import ServicesAdminPage from './pages/admin/ServicesAdminPage.jsx';
-import OffersAdminPage from './pages/admin/OffersAdminPage.jsx';
 import GalleryAdminPage from './pages/admin/GalleryAdminPage.jsx';
 import SettingsAdminPage from './pages/admin/SettingsAdminPage.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
@@ -214,7 +213,6 @@ function AppLayout() {
           >
             <Route index element={<DashboardPage apiBase={REST_API_BASE} />} />
             <Route path="services" element={<ServicesAdminPage />} />
-            <Route path="offers" element={<OffersAdminPage />} />
             <Route path="gallery" element={<GalleryAdminPage />} />
             <Route path="settings" element={<SettingsAdminPage />} />
             <Route path="testimonials" element={<TestimonialsAdminPage />} />

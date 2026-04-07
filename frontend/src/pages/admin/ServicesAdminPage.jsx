@@ -31,6 +31,7 @@ function buildPayloadFromForm(form) {
   const description = form.description.trim();
   const image = form.image.trim();
   const details = linesToDetails(form.details);
+  const offerText = form.offerText.trim();
 
   if (!title || !priceStr) {
     return { error: 'Please enter title and price.' };
@@ -48,6 +49,8 @@ function buildPayloadFromForm(form) {
       price,
       image,
       details,
+      offerPercentage: Number(form.offerPercentage || 0) || 0,
+      offerText,
     },
   };
 }
@@ -58,6 +61,8 @@ const emptyForm = () => ({
   description: '',
   image: '',
   details: '',
+  offerPercentage: '',
+  offerText: '',
 });
 
 export default function ServicesAdminPage() {
@@ -97,6 +102,8 @@ export default function ServicesAdminPage() {
       description: service.description ?? '',
       image: service.image ?? '',
       details: (service.details ?? []).join('\n'),
+      offerPercentage: service.offerPercentage ? String(service.offerPercentage) : '',
+      offerText: service.offerText ?? '',
     });
   };
 
@@ -203,11 +210,34 @@ export default function ServicesAdminPage() {
             className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm resize-y"
           />
 
+          <input
+            name="offerPercentage"
+            placeholder="Offer percentage (optional)"
+            value={form.offerPercentage}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm"
+          />
+
+          <input
+            name="offerText"
+            placeholder="Offer text (optional)"
+            value={form.offerText}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm"
+          />
+
           <div className="flex flex-wrap gap-2">
             <button type="submit" className="btn-primary text-xs px-5 py-2.5">
               {editingId ? 'Update' : 'Add Service'}
             </button>
-            {(editingId || form.title || form.price || form.description || form.image || form.details) && (
+            {(editingId ||
+              form.title ||
+              form.price ||
+              form.description ||
+              form.image ||
+              form.details ||
+              form.offerPercentage ||
+              form.offerText) && (
               <button type="button" onClick={resetForm} className="btn-outline text-xs px-4 py-2.5">
                 Cancel
               </button>
@@ -242,6 +272,11 @@ export default function ServicesAdminPage() {
                     <p className="font-medium text-deepCharcoal">{s.title}</p>
                     <p className="text-sm text-neutral-600 line-clamp-2">{s.description}</p>
                     <p className="text-sm font-semibold text-roseGold mt-1">₹{s.price}</p>
+                    {s.offerPercentage > 0 && (
+                      <p className="text-[11px] text-emerald-600 mt-1">
+                        🔥 {s.offerPercentage}% OFF {s.offerText ? `- ${s.offerText}` : ''}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex gap-2 shrink-0">

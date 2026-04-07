@@ -76,6 +76,10 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
         ? priceRaw
         : Number(priceRaw) || 0;
     const image = String(data.image ?? '').trim();
+    const offerPercentageRaw = Number(data.offerPercentage);
+    const offerPercentage =
+      Number.isFinite(offerPercentageRaw) && offerPercentageRaw > 0 ? offerPercentageRaw : 0;
+    const offerText = String(data.offerText ?? '').trim();
     return {
       id: docSnap.id,
       title: String(data.title ?? ''),
@@ -83,6 +87,8 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
       price,
       image,
       details: normalizeDetails(data.details),
+      offerPercentage,
+      offerText,
       createdAt: data.createdAt ?? null,
     };
   });
