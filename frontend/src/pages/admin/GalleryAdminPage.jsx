@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase.js';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../firebase.js';
 import { GALLERY_CATEGORIES } from '../../constants/galleryCategories.js';
 
 const GALLERY_COLLECTION = 'gallery';
@@ -18,8 +19,9 @@ function mapGalleryDocs(snapshot) {
 
 export default function GalleryAdminPage() {
   const [items, setItems] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({
-    image: '',
     category: GALLERY_CATEGORIES[0],
   });
 
@@ -44,21 +46,28 @@ export default function GalleryAdminPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const image = form.image.trim();
-    if (!image) {
-      alert('Please enter an image URL.');
+    if (!selectedFile) {
+      alert('Please select an image file.');
       return;
     }
     try {
+      setIsUploading(true);
+      const safeName = selectedFile.name.replace(/\s+/g, '-').toLowerCase();
+      const fileRef = ref(storage, `gallery/${Date.now()}-${safeName}`);
+      await uploadBytes(fileRef, selectedFile);
+      const image = await getDownloadURL(fileRef);
+
       await addDoc(collection(db, GALLERY_COLLECTION), {
         image,
         category: form.category,
         createdAt: serverTimestamp(),
       });
-      setForm({ image: '', category: form.category });
+      setSelectedFile(null);
       alert('Image added.');
     } catch {
       alert('Could not add image. Check Firestore rules.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -89,12 +98,12 @@ export default function GalleryAdminPage() {
         <form onSubmit={handleSubmit} className="card-luxe p-5 space-y-3">
           <p className="text-sm font-medium text-deepCharcoal">Add image</p>
           <div>
-            <label className="block text-[11px] text-neutral-600 mb-1">Image URL</label>
+            <label className="block text-[11px] text-neutral-600 mb-1">Upload Image</label>
             <input
-              name="image"
-              value={form.image}
-              onChange={handleChange}
-              className="w-full rounded-full border border-neutral-200 bg-white/70 px-3 py-1.5 text-xs"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              className="w-full rounded-xl border border-neutral-200 bg-white/70 px-3 py-2 text-xs"
             />
           </div>
           <div>
@@ -112,8 +121,8 @@ export default function GalleryAdminPage() {
               ))}
             </select>
           </div>
-          <button type="submit" className="btn-primary text-xs px-4 py-2">
-            Add Image
+          <button type="submit" disabled={isUploading} className="btn-primary text-xs px-4 py-2 disabled:opacity-60">
+            {isUploading ? 'Uploading...' : 'Add Image'}
           </button>
         </form>
 
