@@ -21,7 +21,6 @@ import ServicesAdminPage from './pages/admin/ServicesAdminPage.jsx';
 import GalleryAdminPage from './pages/admin/GalleryAdminPage.jsx';
 import SettingsAdminPage from './pages/admin/SettingsAdminPage.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
-import TestimonialsAdminPage from './pages/admin/TestimonialsAdminPage.jsx';
 import PremiumFooter from './components/PremiumFooter.jsx';
 import { BookingModalProvider, useBookingModal } from './context/BookingModalContext.jsx';
 import { whatsappWaMeUrl } from './constants/contact.js';
@@ -235,7 +234,7 @@ function AppLayout() {
             <Route path="offers" element={<Navigate to="/admin/services" replace />} />
             <Route path="gallery" element={<GalleryAdminPage />} />
             <Route path="settings" element={<SettingsAdminPage />} />
-            <Route path="testimonials" element={<TestimonialsAdminPage />} />
+            <Route path="testimonials" element={<Navigate to="/admin/services" replace />} />
           </Route>
           </Routes>
         </main>
