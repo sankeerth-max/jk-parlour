@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.js';
 import { mapVisibleServicesFromSnapshot } from '../lib/serviceDocuments.js';
-import { WHATSAPP_STANDARD_MESSAGE, whatsappWaMeUrl } from '../constants/contact.js';
+import { whatsappWaMeUrl } from '../constants/contact.js';
 
 const SERVICE_OPTIONS = [
   'Threading',
@@ -140,7 +140,7 @@ function BookingPage() {
       return;
     }
 
-    const url = whatsappWaMeUrl('918072965181', WHATSAPP_STANDARD_MESSAGE);
+    const url = whatsappWaMeUrl('918072965181');
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

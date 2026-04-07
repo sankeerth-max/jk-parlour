@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WHATSAPP_STANDARD_MESSAGE, whatsappWaMeUrl } from '../constants/contact.js';
+import { whatsappWaMeUrl } from '../constants/contact.js';
 import { BOOKING_SERVICE_OPTIONS } from '../constants/bookingModalOptions.js';
 
 const TIME_OPTIONS = ['10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '6:00 PM'];
@@ -72,7 +72,7 @@ export default function WhatsAppBookingModal({ open, onClose, initialService, se
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    const url = whatsappWaMeUrl(settingsWhatsapp, WHATSAPP_STANDARD_MESSAGE);
+    const url = whatsappWaMeUrl(settingsWhatsapp);
     window.open(url, '_blank', 'noopener,noreferrer');
     setTimeout(() => {
       setLoading(false);
