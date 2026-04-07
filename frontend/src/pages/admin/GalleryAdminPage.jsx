@@ -17,6 +17,15 @@ function mapGalleryDocs(snapshot) {
   });
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function GalleryAdminPage() {
   const [items, setItems] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -52,11 +61,18 @@ export default function GalleryAdminPage() {
     }
     try {
       setIsUploading(true);
-      const storage = getFirebaseStorage();
-      const safeName = selectedFile.name.replace(/\s+/g, '-').toLowerCase();
-      const fileRef = ref(storage, `gallery/${Date.now()}-${safeName}`);
-      await uploadBytes(fileRef, selectedFile);
-      const image = await getDownloadURL(fileRef);
+      let image = '';
+      try {
+        const storage = getFirebaseStorage();
+        const safeName = selectedFile.name.replace(/\s+/g, '-').toLowerCase();
+        const fileRef = ref(storage, `gallery/${Date.now()}-${safeName}`);
+        await uploadBytes(fileRef, selectedFile);
+        image = await getDownloadURL(fileRef);
+      } catch (storageError) {
+        // Fallback keeps Gallery functional if Storage rules/config block uploads.
+        console.error('Gallery storage upload failed, using data URL fallback:', storageError);
+        image = await fileToDataUrl(selectedFile);
+      }
 
       await addDoc(collection(db, GALLERY_COLLECTION), {
         image,
@@ -65,8 +81,9 @@ export default function GalleryAdminPage() {
       });
       setSelectedFile(null);
       alert('Image added.');
-    } catch {
-      alert('Could not add image. Check Firestore rules.');
+    } catch (error) {
+      console.error('Gallery add failed:', error);
+      alert(`Could not add image: ${error?.message || 'unknown error'}`);
     } finally {
       setIsUploading(false);
     }
