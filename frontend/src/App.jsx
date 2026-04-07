@@ -13,6 +13,7 @@ import HomePage from './pages/HomePage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import ServicesPage from './pages/ServicesPage.jsx';
 import GalleryPage from './pages/GalleryPage.jsx';
+import BookingPage from './pages/BookingPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import DashboardPage from './pages/admin/DashboardPage.jsx';
@@ -23,7 +24,7 @@ import SettingsAdminPage from './pages/admin/SettingsAdminPage.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import TestimonialsAdminPage from './pages/admin/TestimonialsAdminPage.jsx';
 import PremiumFooter from './components/PremiumFooter.jsx';
-import { BookingModalProvider } from './context/BookingModalContext.jsx';
+import { BookingModalProvider, useBookingModal } from './context/BookingModalContext.jsx';
 import { whatsappWaMeUrl } from './constants/contact.js';
 import { REST_API_BASE } from './config/api.js';
 import { seedSalonServicesIfEmpty } from './lib/seedSalonServices.js';
@@ -38,6 +39,7 @@ function ProtectedRoute({ children }) {
 }
 
 function NavHeader() {
+  const { openBookingModal } = useBookingModal();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
@@ -78,6 +80,7 @@ function NavHeader() {
             <Link to="/about" className="hover:text-muted transition-colors duration-200">About</Link>
             <Link to="/services" className="hover:text-muted transition-colors duration-200">Services</Link>
             <Link to="/gallery" className="hover:text-muted transition-colors duration-200">Gallery</Link>
+            <Link to="/book" className="hover:text-muted transition-colors duration-200">Booking</Link>
             <Link to="/contact" className="hover:text-muted transition-colors duration-200">Contact</Link>
           </nav>
 
@@ -120,6 +123,13 @@ function NavHeader() {
               )}
             </button>
 
+            <button
+              type="button"
+              onClick={() => openBookingModal()}
+              className="btn-primary hidden lg:inline-flex items-center justify-center py-[10px] px-[20px]"
+            >
+              Book Now
+            </button>
           </div>
         </div>
         {mobileOpen && (
@@ -129,8 +139,19 @@ function NavHeader() {
               <Link to="/about" className="hover:text-muted transition-colors">About</Link>
               <Link to="/services" className="hover:text-muted transition-colors">Services</Link>
               <Link to="/gallery" className="hover:text-muted transition-colors">Gallery</Link>
+              <Link to="/book" className="hover:text-muted transition-colors">Booking</Link>
               <Link to="/contact" className="hover:text-muted transition-colors">Contact</Link>
             </nav>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                openBookingModal();
+              }}
+              className="btn-primary mt-5 w-full py-3 text-sm font-medium"
+            >
+              Book Now
+            </button>
           </div>
         )}
       </header>
@@ -180,6 +201,7 @@ function AppLayout() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/book" element={<BookingPage settings={settings} />} />
           <Route path="/contact" element={<ContactPage settings={settings} />} />
           <Route path="/admin/login" element={<LoginPage />} />
           <Route

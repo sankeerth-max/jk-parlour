@@ -6,11 +6,13 @@ import {
   salonTelHref,
   whatsappWaMeUrl,
 } from '../constants/contact.js';
+import { useBookingModal } from '../context/BookingModalContext.jsx';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/jk.makeoverartistry';
 
 
 export default function PremiumFooter({ settings }) {
+  const { openBookingModal } = useBookingModal();
   const s = settings || {};
 
   const quickLinks = [
@@ -18,6 +20,7 @@ export default function PremiumFooter({ settings }) {
     { to: '/about', label: 'About' },
     { to: '/services', label: 'Services' },
     { to: '/gallery', label: 'Gallery' },
+    { to: '/book', label: 'Booking' },
     { to: '/contact', label: 'Contact' },
   ];
 
@@ -55,15 +58,26 @@ export default function PremiumFooter({ settings }) {
               Quick links
             </h3>
             <nav className="flex flex-col gap-2.5">
-              {quickLinks.map(({ to, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="text-[13px] text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
-                >
-                  {label}
-                </Link>
-              ))}
+              {quickLinks.map(({ to, label }) =>
+                to === '/book' ? (
+                  <button
+                    key={to}
+                    type="button"
+                    onClick={() => openBookingModal()}
+                    className="text-[13px] text-[#6E6E73] hover:text-[#1D1D1F] transition-colors text-center md:text-left"
+                  >
+                    {label}
+                  </button>
+                ) : (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="text-[13px] text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
+                  >
+                    {label}
+                  </Link>
+                )
+              )}
             </nav>
           </div>
 
