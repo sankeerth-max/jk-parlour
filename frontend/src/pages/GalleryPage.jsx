@@ -13,7 +13,7 @@ function mapGalleryDocs(snapshot) {
     const data = docSnap.data();
     return {
       id: docSnap.id,
-      image: String(data.image ?? '').trim(),
+      image: String(data.imageUrl ?? data.image ?? '').trim(),
       category: String(data.category ?? '').trim(),
     };
   });

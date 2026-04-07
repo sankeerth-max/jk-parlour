@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, getFirebaseStorage } from '../../firebase.js';
+import { db } from '../../firebase.js';
 import { GALLERY_CATEGORIES } from '../../constants/galleryCategories.js';
 
 const GALLERY_COLLECTION = 'gallery';
@@ -11,26 +10,17 @@ function mapGalleryDocs(snapshot) {
     const data = docSnap.data();
     return {
       id: docSnap.id,
-      image: String(data.image ?? '').trim(),
+      image: String(data.imageUrl ?? data.image ?? '').trim(),
       category: String(data.category ?? '').trim(),
     };
   });
 }
 
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('Failed to read image file.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function GalleryAdminPage() {
   const [items, setItems] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
+    imageUrl: '',
     category: GALLERY_CATEGORIES[0],
   });
 
@@ -55,37 +45,25 @@ export default function GalleryAdminPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedFile) {
-      alert('Please select an image file.');
+    const imageUrl = String(form.imageUrl ?? '').trim();
+    if (!imageUrl.startsWith('http')) {
+      alert('Please enter a valid image URL');
       return;
     }
     try {
-      setIsUploading(true);
-      let image = '';
-      try {
-        const storage = getFirebaseStorage();
-        const safeName = selectedFile.name.replace(/\s+/g, '-').toLowerCase();
-        const fileRef = ref(storage, `gallery/${Date.now()}-${safeName}`);
-        await uploadBytes(fileRef, selectedFile);
-        image = await getDownloadURL(fileRef);
-      } catch (storageError) {
-        // Fallback keeps Gallery functional if Storage rules/config block uploads.
-        console.error('Gallery storage upload failed, using data URL fallback:', storageError);
-        image = await fileToDataUrl(selectedFile);
-      }
-
+      setIsSaving(true);
       await addDoc(collection(db, GALLERY_COLLECTION), {
-        image,
+        imageUrl,
         category: form.category,
         createdAt: serverTimestamp(),
       });
-      setSelectedFile(null);
+      setForm((prev) => ({ ...prev, imageUrl: '' }));
       alert('Image added.');
     } catch (error) {
       console.error('Gallery add failed:', error);
       alert(`Could not add image: ${error?.message || 'unknown error'}`);
     } finally {
-      setIsUploading(false);
+      setIsSaving(false);
     }
   };
 
@@ -116,14 +94,25 @@ export default function GalleryAdminPage() {
         <form onSubmit={handleSubmit} className="card-luxe p-5 space-y-3">
           <p className="text-sm font-medium text-deepCharcoal">Add image</p>
           <div>
-            <label className="block text-[11px] text-neutral-600 mb-1">Upload Image</label>
+            <label className="block text-[11px] text-neutral-600 mb-1">Image URL</label>
             <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full rounded-xl border border-neutral-200 bg-white/70 px-3 py-2 text-xs"
+              type="text"
+              name="imageUrl"
+              value={form.imageUrl}
+              onChange={handleChange}
+              placeholder="https://example.com/image.jpg"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-xs"
             />
           </div>
+          {form.imageUrl.trim().startsWith('http') && (
+            <div className="pt-1">
+              <img
+                src={form.imageUrl.trim()}
+                alt="Preview"
+                className="w-[200px] h-[150px] object-cover rounded-[10px] shadow-[0_8px_20px_rgba(15,23,42,0.12)] border border-neutral-200"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-[11px] text-neutral-600 mb-1">Category</label>
             <select
@@ -139,8 +128,12 @@ export default function GalleryAdminPage() {
               ))}
             </select>
           </div>
-          <button type="submit" disabled={isUploading} className="btn-primary text-xs px-4 py-2 disabled:opacity-60">
-            {isUploading ? 'Uploading...' : 'Add Image'}
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="inline-flex items-center justify-center rounded-full bg-black text-white text-xs px-5 py-2 disabled:opacity-60"
+          >
+            {isSaving ? 'Adding...' : 'Add Image'}
           </button>
         </form>
 
