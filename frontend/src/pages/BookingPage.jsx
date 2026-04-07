@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { addDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { whatsappWaMeDigits } from '../constants/contact.js';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.js';
 import { mapVisibleServicesFromSnapshot } from '../lib/serviceDocuments.js';
 
@@ -19,12 +18,10 @@ const SERVICE_OPTIONS = [
   'Package Services',
 ];
 
-const APPOINTMENTS_COLLECTION = 'appointments';
-
 const inputBase =
   'w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/20 transition-colors';
 
-function BookingPage({ settings }) {
+function BookingPage() {
   const location = useLocation();
   const [services, setServices] = useState([]);
   const [form, setForm] = useState({
@@ -39,7 +36,6 @@ function BookingPage({ settings }) {
     message: '',
   });
   const [status, setStatus] = useState({ type: '', message: '' });
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const colRef = collection(db, 'services');
@@ -134,7 +130,7 @@ function BookingPage({ settings }) {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleWhatsAppBooking = (e) => {
     e.preventDefault();
     setStatus({ type: '', message: '' });
 
@@ -143,47 +139,31 @@ function BookingPage({ settings }) {
       return;
     }
 
-    try {
-      setLoading(true);
-      await addDoc(collection(db, APPOINTMENTS_COLLECTION), {
-        ...form,
-        status: 'Pending',
-        createdAt: serverTimestamp(),
-      });
-      setStatus({
-        type: 'success',
-        message:
-          'Thank you! Your appointment request has been received. We will confirm your booking shortly.',
-      });
-      setForm({
-        name: '',
-        phone: '',
-        email: '',
-        service: '',
-        category: '',
-        price: '',
-        date: '',
-        timeSlot: '',
-        message: '',
-      });
-    } catch {
-      setStatus({
-        type: 'error',
-        message: 'Could not submit booking. Please try again or confirm on WhatsApp.',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const whatsappText = `Hello 👋
+I would like to book an appointment at *Sri Karthika Bridal Studio*.
 
-  const whatsappNumber = whatsappWaMeDigits(settings?.whatsapp);
-  const whatsappMessage = encodeURIComponent(
-    `Hi, I would like to book:\nService: ${form.service || '-'}\nPrice: ${
-      form.price ? `₹${form.price}` : 'On request'
-    }\nCategory: ${form.category || 'General Services'}\nDate: ${form.date || '-'}\nTime: ${
-      form.timeSlot || '-'
-    }\nName: ${form.name || '-'}`
-  );
+*Customer Details*
+Name: ${form.name}
+Phone: ${form.phone}
+Email: ${form.email || '-'}
+
+*Service Details*
+Service: ${form.service}
+Category: ${form.category || 'General Services'}
+Price: ₹${form.price || '-'}
+
+*Appointment Details*
+Date: ${form.date}
+Time: ${form.timeSlot}
+
+*Additional Message*
+${form.message || '-'}
+
+Please confirm my booking. Thank you 😊`;
+
+    const url = `https://wa.me/918072965181?text=${encodeURIComponent(whatsappText)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <motion.section
@@ -213,7 +193,7 @@ function BookingPage({ settings }) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="card-luxe p-6 md:p-8 space-y-5 w-full">
+        <form onSubmit={handleWhatsAppBooking} className="card-luxe p-6 md:p-8 space-y-5 w-full">
           {selectedSummary && (
             <div className="rounded-2xl border border-border bg-warmbeige/35 px-5 py-4">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Selected Service</p>
@@ -349,21 +329,12 @@ function BookingPage({ settings }) {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <motion.button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full sm:w-auto justify-center disabled:opacity-60"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.2 }}
-            >
-              {loading ? 'Booking...' : 'Submit Appointment Request'}
-            </motion.button>
             <motion.a
-              href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+              href="#"
               target="_blank"
               rel="noreferrer"
-              className="btn-outline w-full sm:w-auto justify-center"
+              onClick={handleWhatsAppBooking}
+              className="btn-primary w-full sm:w-auto justify-center"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               transition={{ duration: 0.2 }}
