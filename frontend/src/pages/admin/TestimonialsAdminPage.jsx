@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase.js';
+import { mapTestimonialsSnapshot } from '../../lib/realtimeContent.js';
 
-function TestimonialsAdminPage({ apiBase }) {
+const TESTIMONIALS_COLLECTION = 'testimonials';
+
+function TestimonialsAdminPage() {
   const [testimonials, setTestimonials] = useState([]);
   const [form, setForm] = useState({
     name: '',
@@ -9,17 +14,15 @@ function TestimonialsAdminPage({ apiBase }) {
     source: 'Direct',
   });
 
-  const load = async () => {
-    if (!apiBase) return;
-    const res = await fetch(`${apiBase}/testimonials`);
-    const data = await res.json();
-    setTestimonials(data);
-  };
-
   useEffect(() => {
-    if (!apiBase) return;
-    load().catch(() => {});
-  }, [apiBase]);
+    const colRef = collection(db, TESTIMONIALS_COLLECTION);
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => setTestimonials(mapTestimonialsSnapshot(snapshot)),
+      () => setTestimonials([])
+    );
+    return () => unsubscribe();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,41 +31,48 @@ function TestimonialsAdminPage({ apiBase }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    await fetch(`${apiBase}/testimonials`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    });
-    setForm({
-      name: '',
-      message: '',
-      rating: 5,
-      source: 'Direct',
-    });
-    await load();
+    if (!form.name.trim() || !form.message.trim()) {
+      alert('Please enter name and message.');
+      return;
+    }
+    try {
+      await addDoc(collection(db, TESTIMONIALS_COLLECTION), {
+        name: form.name.trim(),
+        message: form.message.trim(),
+        rating: Number(form.rating) || 5,
+        source: form.source.trim() || 'Direct',
+        createdAt: serverTimestamp(),
+      });
+      setForm({
+        name: '',
+        message: '',
+        rating: 5,
+        source: 'Direct',
+      });
+    } catch {
+      alert('Could not add testimonial. Check Firestore rules and your connection.');
+    }
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
     if (!window.confirm('Delete this testimonial?')) return;
-    await fetch(`${apiBase}/testimonials/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    await load();
+    try {
+      await deleteDoc(doc(db, TESTIMONIALS_COLLECTION, id));
+    } catch {
+      alert('Could not delete testimonial.');
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-deepCharcoal mb-1">Testimonials</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="font-display text-2xl text-deepCharcoal">Testimonials</h1>
+            <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+              Live Sync
+            </span>
+          </div>
           <p className="text-xs text-neutral-600">
             Add and manage customer reviews displayed on the website.
           </p>
@@ -121,7 +131,7 @@ function TestimonialsAdminPage({ apiBase }) {
 
         <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
           {testimonials.map((t) => (
-            <div key={t._id} className="card-luxe p-4 text-xs flex justify-between gap-3">
+            <div key={t.id} className="card-luxe p-4 text-xs flex justify-between gap-3">
               <div>
                 <p className="font-medium text-deepCharcoal mb-1">{t.name}</p>
                 <p className="text-[11px] text-roseGold mb-1">
@@ -132,9 +142,9 @@ function TestimonialsAdminPage({ apiBase }) {
                   <p className="text-[10px] text-neutral-500 mt-1">Source: {t.source}</p>
                 )}
               </div>
-              <button
+                <button
                 type="button"
-                onClick={() => handleDelete(t._id)}
+                  onClick={() => handleDelete(t.id)}
                 className="h-7 px-3 rounded-full border border-red-200 text-red-500 text-[11px] self-start hover:bg-red-50"
               >
                 Delete

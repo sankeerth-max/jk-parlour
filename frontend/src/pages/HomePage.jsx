@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useBookingModal } from '../context/BookingModalContext.jsx';
 import SitePreFooterCta from '../components/SitePreFooterCta.jsx';
+import { db } from '../firebase.js';
+import { DEFAULT_TESTIMONIALS, mapOffersSnapshot, mapTestimonialsSnapshot } from '../lib/realtimeContent.js';
 
 const CATEGORY_COLLECTIONS = [
   {
@@ -73,36 +76,43 @@ const SERVICE_PREVIEW = [
   { name: 'Bridal', to: '/services' },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: 'Priya',
-    review:
-      'This was the best bridal experience. The team made me feel confident and beautiful from trial to the final look.',
-    rating: 5,
-  },
-  {
-    name: 'Meenakshi',
-    review:
-      'The skincare glow is unreal. Everything felt premium, clean, and personalized for my skin type.',
-    rating: 5,
-  },
-  {
-    name: 'Ananya',
-    review:
-      'Professional makeup and hair styling with a calm, luxury vibe. I loved how natural and elegant the final result looked.',
-    rating: 5,
-  },
-];
-
 function HomePage() {
   const { openBookingModal } = useBookingModal();
   const [selectedBridalImage, setSelectedBridalImage] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
   const sectionAnimation = {
     initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, amount: 0.2 },
     transition: { duration: 0.5 },
   };
+
+  useEffect(() => {
+    const offersRef = collection(db, 'offers');
+    const unsub = onSnapshot(
+      offersRef,
+      (snapshot) => {
+        const active = mapOffersSnapshot(snapshot).filter((o) => o.isActive);
+        setOffers(active);
+      },
+      () => setOffers([])
+    );
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const testimonialsRef = collection(db, 'testimonials');
+    const unsub = onSnapshot(
+      testimonialsRef,
+      (snapshot) => {
+        const rows = mapTestimonialsSnapshot(snapshot);
+        setTestimonials(rows.length ? rows : DEFAULT_TESTIMONIALS);
+      },
+      () => setTestimonials(DEFAULT_TESTIMONIALS)
+    );
+    return () => unsub();
+  }, []);
 
   return (
     <>
@@ -506,6 +516,36 @@ function HomePage() {
         </div>
       </motion.section>
 
+      {offers.length > 0 && (
+        <motion.section className="section-padding-lg bg-white" {...sectionAnimation}>
+          <div className="lux-container">
+            <p className="section-title text-center">Offers</p>
+            <h2 className="section-heading text-center mb-8" style={{ fontFamily: 'var(--font-display)' }}>
+              Current Offers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
+              {offers.map((o) => (
+                <div key={o.id} className="media-frame bg-white border border-border/70 p-7">
+                  <p className="text-xs uppercase tracking-[0.22em] text-muted mb-3">Special Offer</p>
+                  <h3 className="text-xl text-ink mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                    {o.title}
+                  </h3>
+                  {o.discountPercentage > 0 && (
+                    <p className="text-champagne font-medium text-sm mb-2">{o.discountPercentage}% OFF</p>
+                  )}
+                  {o.description && <p className="text-sm text-muted leading-relaxed">{o.description}</p>}
+                  {(o.startDate || o.endDate) && (
+                    <p className="text-xs text-muted mt-3">
+                      {o.startDate || 'Now'} - {o.endDate || 'Limited time'}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
       {/* Instagram */}
       <motion.section className="section-padding-lg bg-cream" {...sectionAnimation}>
         <div className="lux-container">
@@ -543,9 +583,9 @@ function HomePage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-            {TESTIMONIALS.map((t) => (
+            {testimonials.map((t) => (
               <div
-                key={t.name}
+                key={t.id || t.name}
                 className="media-frame bg-white border border-border/70 p-8"
               >
                 <div className="flex items-center justify-between gap-4">
@@ -562,7 +602,7 @@ function HomePage() {
                 </div>
 
                 <p className="mt-5 text-ink/90 leading-relaxed text-sm md:text-base">
-                  “{t.review}”
+                  “{t.message}”
                 </p>
                 <p className="mt-6 text-ink font-medium" style={{ fontFamily: 'var(--font-display)' }}>
                   — {t.name}

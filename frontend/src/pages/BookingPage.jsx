@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { addDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { whatsappWaMeDigits } from '../constants/contact.js';
-import { USE_REST_API } from '../config/api.js';
+import { db } from '../firebase.js';
+import { mapVisibleServicesFromSnapshot } from '../lib/serviceDocuments.js';
 
 const SERVICE_OPTIONS = [
   'Threading',
@@ -17,10 +19,12 @@ const SERVICE_OPTIONS = [
   'Package Services',
 ];
 
+const APPOINTMENTS_COLLECTION = 'appointments';
+
 const inputBase =
   'w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/20 transition-colors';
 
-function BookingPage({ apiBase, settings }) {
+function BookingPage({ settings }) {
   const location = useLocation();
   const [services, setServices] = useState([]);
   const [form, setForm] = useState({
@@ -38,27 +42,25 @@ function BookingPage({ apiBase, settings }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!USE_REST_API) return undefined;
-    const ac = new AbortController();
-    fetch(`${apiBase}/services`, { signal: ac.signal })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setServices(data);
-      })
-      .catch(() => {});
-    return () => ac.abort();
-  }, [apiBase]);
+    const colRef = collection(db, 'services');
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => {
+        const rows = mapVisibleServicesFromSnapshot(snapshot);
+        setServices(rows);
+      },
+      () => setServices([])
+    );
+    return () => unsubscribe();
+  }, []);
 
   const serviceOptions = useMemo(() => {
     if (services.length) {
       return services.map((service) => ({
-        value: service.name,
-        label: service.name,
-        category: service.category || '',
-        price:
-          service.priceFrom !== undefined && service.priceFrom !== null
-            ? String(service.priceFrom)
-            : '',
+        value: service.title,
+        label: service.title,
+        category: service.title || '',
+        price: service.price !== undefined && service.price !== null ? String(service.price) : '',
       }));
     }
     return SERVICE_OPTIONS.map((name) => ({
@@ -69,19 +71,41 @@ function BookingPage({ apiBase, settings }) {
     }));
   }, [services]);
 
+  const serviceOptionByValue = useMemo(() => {
+    const m = new Map();
+    for (const opt of serviceOptions) m.set(opt.value, opt);
+    return m;
+  }, [serviceOptions]);
+
   useEffect(() => {
     const selected = location.state?.selectedService;
     if (!selected) return;
+
+    const requestedName = String(selected.title ?? selected.name ?? selected.service ?? '').trim();
+    if (!requestedName) return;
+
+    const matched =
+      serviceOptions.find(
+        (opt) => opt.value.toLowerCase() === requestedName.toLowerCase()
+      ) || serviceOptionByValue.get(requestedName);
+
+    const serviceName = matched?.value || requestedName;
+    const category = String(selected.category ?? matched?.category ?? '').trim();
+
+    const selectedPriceRaw =
+      selected.price ?? selected.startingPrice ?? selected.priceFrom ?? matched?.price;
+    const price =
+      selectedPriceRaw !== undefined && selectedPriceRaw !== null && String(selectedPriceRaw).trim() !== ''
+        ? String(selectedPriceRaw)
+        : '';
+
     setForm((prev) => ({
       ...prev,
-      service: selected.name || prev.service,
-      category: selected.category || prev.category,
-      price:
-        selected.price !== undefined && selected.price !== null
-          ? String(selected.price)
-          : prev.price,
+      service: serviceName,
+      category: category || prev.category,
+      price: price || prev.price,
     }));
-  }, [location.state]);
+  }, [location.state, serviceOptions, serviceOptionByValue]);
 
   const selectedSummary = useMemo(() => {
     if (!form.service) return null;
@@ -119,26 +143,13 @@ function BookingPage({ apiBase, settings }) {
       return;
     }
 
-    if (!USE_REST_API) {
-      setStatus({
-        type: 'error',
-        message:
-          'The booking server is not connected. Use “Confirm on WhatsApp” below to send your request.',
-      });
-      return;
-    }
-
     try {
       setLoading(true);
-      const res = await fetch(`${apiBase}/appointments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+      await addDoc(collection(db, APPOINTMENTS_COLLECTION), {
+        ...form,
+        status: 'Pending',
+        createdAt: serverTimestamp(),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to book appointment');
-      }
       setStatus({
         type: 'success',
         message:
@@ -155,8 +166,11 @@ function BookingPage({ apiBase, settings }) {
         timeSlot: '',
         message: '',
       });
-    } catch (err) {
-      setStatus({ type: 'error', message: err.message });
+    } catch {
+      setStatus({
+        type: 'error',
+        message: 'Could not submit booking. Please try again or confirm on WhatsApp.',
+      });
     } finally {
       setLoading(false);
     }

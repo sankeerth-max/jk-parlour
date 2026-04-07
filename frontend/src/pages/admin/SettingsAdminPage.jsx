@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react';
-import {
-  loadSettings,
-  persistSettings,
-  notifySettingsUpdated,
-} from '../../lib/settingsStorage.js';
+import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase.js';
+import { DEFAULT_SITE_SETTINGS } from '../../lib/realtimeContent.js';
 
 export default function SettingsAdminPage() {
-  const [settings, setSettings] = useState(() => loadSettings());
+  const [settings, setSettings] = useState(() => DEFAULT_SITE_SETTINGS);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setSettings(loadSettings());
+    const settingsRef = doc(db, 'siteSettings', 'main');
+    const unsub = onSnapshot(
+      settingsRef,
+      (snap) => {
+        const data = snap.data() || {};
+        setSettings({ ...DEFAULT_SITE_SETTINGS, ...data });
+      },
+      () => setSettings(DEFAULT_SITE_SETTINGS)
+    );
+    return () => unsub();
   }, []);
 
   const handleChange = (e) => {
@@ -18,20 +25,33 @@ export default function SettingsAdminPage() {
     setSettings((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    persistSettings(settings);
-    notifySettingsUpdated();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await setDoc(
+        doc(db, 'siteSettings', 'main'),
+        { ...settings, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaved(false);
+      alert('Could not save settings. Check Firestore rules and your connection.');
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-deepCharcoal mb-1">Website Settings</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="font-display text-2xl text-deepCharcoal">Website Settings</h1>
+          <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+            Live Sync
+          </span>
+        </div>
         <p className="text-xs text-neutral-600">
-          Update studio contact details, social links, and working hours shown on the site. Saved on this device.
+          Update studio contact details, social links, and working hours shown on the site in real time.
         </p>
       </div>
 

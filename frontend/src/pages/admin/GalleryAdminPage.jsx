@@ -74,7 +74,12 @@ export default function GalleryAdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-deepCharcoal mb-1">Gallery</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="font-display text-2xl text-deepCharcoal">Gallery</h1>
+          <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+            Live Sync
+          </span>
+        </div>
         <p className="text-xs text-neutral-600">
           Images sync to the public gallery in real time (Firestore collection &quot;gallery&quot;).
         </p>

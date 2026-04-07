@@ -1,48 +1,47 @@
 import { useEffect, useState } from 'react';
+import { collection, doc, onSnapshot, query, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase.js';
+import { mapAppointmentsSnapshot } from '../../lib/realtimeContent.js';
 
 const STATUS_OPTIONS = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
+const APPOINTMENTS_COLLECTION = 'appointments';
 
-function AppointmentsAdminPage({ apiBase }) {
+function AppointmentsAdminPage() {
   const [appointments, setAppointments] = useState([]);
   const [filterDate, setFilterDate] = useState('');
 
-  const load = async () => {
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    const qs = filterDate ? `?date=${filterDate}` : '';
-    const res = await fetch(`${apiBase}/appointments${qs}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setAppointments(data);
-  };
-
   useEffect(() => {
-    if (!apiBase) return;
-    load().catch(() => {});
-  }, [apiBase, filterDate]);
+    const q = query(collection(db, APPOINTMENTS_COLLECTION));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => setAppointments(mapAppointmentsSnapshot(snapshot)),
+      () => setAppointments([])
+    );
+    return () => unsubscribe();
+  }, []);
 
   const updateStatus = async (id, status) => {
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    await fetch(`${apiBase}/appointments/${id}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-    await load();
+    try {
+      await updateDoc(doc(db, APPOINTMENTS_COLLECTION, id), { status });
+    } catch {
+      alert('Could not update appointment status.');
+    }
   };
+
+  const visibleAppointments = filterDate
+    ? appointments.filter((a) => String(a.date) === filterDate)
+    : appointments;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-deepCharcoal mb-1">Appointments</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="font-display text-2xl text-deepCharcoal">Appointments</h1>
+            <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+              Live Sync
+            </span>
+          </div>
           <p className="text-xs text-neutral-600">
             View, confirm, cancel or mark bookings as completed.
           </p>
@@ -70,8 +69,8 @@ function AppointmentsAdminPage({ apiBase }) {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((a) => (
-                <tr key={a._id} className="border-t border-neutral-100">
+              {visibleAppointments.map((a) => (
+                <tr key={a.id} className="border-t border-neutral-100">
                   <td className="px-3 py-2">
                     <p className="font-medium text-deepCharcoal">{a.name}</p>
                     {a.message && (
@@ -114,7 +113,7 @@ function AppointmentsAdminPage({ apiBase }) {
                         <button
                           key={s}
                           type="button"
-                          onClick={() => updateStatus(a._id, s)}
+                          onClick={() => updateStatus(a.id, s)}
                           className="text-[10px] px-2 py-0.5 rounded-full border border-neutral-200 hover:bg-softPink/60"
                         >
                           {s}
@@ -124,7 +123,7 @@ function AppointmentsAdminPage({ apiBase }) {
                   </td>
                 </tr>
               ))}
-              {!appointments.length && (
+              {!visibleAppointments.length && (
                 <tr>
                   <td colSpan={7} className="px-3 py-4 text-center text-xs text-neutral-500">
                     No appointments found for the selected filters.

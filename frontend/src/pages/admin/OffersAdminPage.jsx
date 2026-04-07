@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore';
+import { db } from '../../firebase.js';
+import { mapOffersSnapshot } from '../../lib/realtimeContent.js';
 
-function OffersAdminPage({ apiBase }) {
+const OFFERS_COLLECTION = 'offers';
+
+function OffersAdminPage() {
   const [offers, setOffers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
@@ -12,21 +25,15 @@ function OffersAdminPage({ apiBase }) {
     isActive: true,
   });
 
-  const load = async () => {
-    if (!apiBase) return;
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    const res = await fetch(`${apiBase}/offers/all`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setOffers(data);
-  };
-
   useEffect(() => {
-    if (!apiBase) return;
-    load().catch(() => {});
-  }, [apiBase]);
+    const colRef = collection(db, OFFERS_COLLECTION);
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => setOffers(mapOffersSnapshot(snapshot)),
+      () => setOffers([])
+    );
+    return () => unsubscribe();
+  }, []);
 
   const startNew = () => {
     setEditing(null);
@@ -41,7 +48,7 @@ function OffersAdminPage({ apiBase }) {
   };
 
   const startEdit = (offer) => {
-    setEditing(offer._id);
+    setEditing(offer.id);
     setForm({
       title: offer.title || '',
       description: offer.description || '',
@@ -59,42 +66,44 @@ function OffersAdminPage({ apiBase }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
     const payload = {
       ...form,
       discountPercentage: Number(form.discountPercentage || 0),
     };
-    const url = editing ? `${apiBase}/offers/${editing}` : `${apiBase}/offers`;
-    const method = editing ? 'PUT' : 'POST';
-    await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    await load();
-    startNew();
+    try {
+      if (editing) {
+        await updateDoc(doc(db, OFFERS_COLLECTION, editing), payload);
+      } else {
+        await addDoc(collection(db, OFFERS_COLLECTION), {
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
+      }
+      startNew();
+    } catch {
+      alert('Could not save offer. Check Firestore rules and your connection.');
+    }
   };
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
     if (!window.confirm('Delete this offer?')) return;
-    await fetch(`${apiBase}/offers/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    await load();
+    try {
+      await deleteDoc(doc(db, OFFERS_COLLECTION, id));
+    } catch {
+      alert('Could not delete offer.');
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-deepCharcoal mb-1">Offers</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="font-display text-2xl text-deepCharcoal">Offers</h1>
+            <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+              Live Sync
+            </span>
+          </div>
           <p className="text-xs text-neutral-600">
             Create and manage promotional offers shown on the site.
           </p>
@@ -177,7 +186,7 @@ function OffersAdminPage({ apiBase }) {
         <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
           {offers.map((o) => (
             <div
-              key={o._id}
+              key={o.id}
               className="card-luxe p-4 flex items-start justify-between gap-3 text-xs"
             >
               <div>
@@ -204,7 +213,7 @@ function OffersAdminPage({ apiBase }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(o._id)}
+                  onClick={() => handleDelete(o.id)}
                   className="text-[11px] px-3 py-1 rounded-full border border-red-200 text-red-500 hover:bg-red-50"
                 >
                   Delete

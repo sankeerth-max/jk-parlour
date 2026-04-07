@@ -8,27 +8,27 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { doc, onSnapshot } from 'firebase/firestore';
 import HomePage from './pages/HomePage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import ServicesPage from './pages/ServicesPage.jsx';
 import GalleryPage from './pages/GalleryPage.jsx';
-import BookingPage from './pages/BookingPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import DashboardPage from './pages/admin/DashboardPage.jsx';
 import ServicesAdminPage from './pages/admin/ServicesAdminPage.jsx';
 import OffersAdminPage from './pages/admin/OffersAdminPage.jsx';
 import GalleryAdminPage from './pages/admin/GalleryAdminPage.jsx';
-import AppointmentsAdminPage from './pages/admin/AppointmentsAdminPage.jsx';
 import SettingsAdminPage from './pages/admin/SettingsAdminPage.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import TestimonialsAdminPage from './pages/admin/TestimonialsAdminPage.jsx';
 import PremiumFooter from './components/PremiumFooter.jsx';
-import { BookingModalProvider, useBookingModal } from './context/BookingModalContext.jsx';
+import { BookingModalProvider } from './context/BookingModalContext.jsx';
 import { whatsappWaMeUrl } from './constants/contact.js';
 import { REST_API_BASE } from './config/api.js';
-import { loadSettings, SETTINGS_UPDATED_EVENT } from './lib/settingsStorage.js';
 import { seedSalonServicesIfEmpty } from './lib/seedSalonServices.js';
+import { db } from './firebase.js';
+import { DEFAULT_SITE_SETTINGS } from './lib/realtimeContent.js';
 
 function ProtectedRoute({ children }) {
   if (localStorage.getItem('isAdmin') !== 'true') {
@@ -38,7 +38,6 @@ function ProtectedRoute({ children }) {
 }
 
 function NavHeader() {
-  const { openBookingModal } = useBookingModal();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
@@ -79,7 +78,6 @@ function NavHeader() {
             <Link to="/about" className="hover:text-muted transition-colors duration-200">About</Link>
             <Link to="/services" className="hover:text-muted transition-colors duration-200">Services</Link>
             <Link to="/gallery" className="hover:text-muted transition-colors duration-200">Gallery</Link>
-            <Link to="/book" className="hover:text-muted transition-colors duration-200">Booking</Link>
             <Link to="/contact" className="hover:text-muted transition-colors duration-200">Contact</Link>
           </nav>
 
@@ -122,13 +120,6 @@ function NavHeader() {
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => openBookingModal()}
-              className="btn-primary hidden lg:inline-flex items-center justify-center py-[10px] px-[20px]"
-            >
-              Book Now
-            </button>
           </div>
         </div>
         {mobileOpen && (
@@ -138,19 +129,8 @@ function NavHeader() {
               <Link to="/about" className="hover:text-muted transition-colors">About</Link>
               <Link to="/services" className="hover:text-muted transition-colors">Services</Link>
               <Link to="/gallery" className="hover:text-muted transition-colors">Gallery</Link>
-              <Link to="/book" className="hover:text-muted transition-colors">Booking</Link>
               <Link to="/contact" className="hover:text-muted transition-colors">Contact</Link>
             </nav>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false);
-                openBookingModal();
-              }}
-              className="btn-primary mt-5 w-full py-3 text-sm font-medium"
-            >
-              Book Now
-            </button>
           </div>
         )}
       </header>
@@ -159,19 +139,21 @@ function NavHeader() {
 }
 
 function AppLayout() {
-  const [settings, setSettings] = useState(() => loadSettings());
+  const [settings, setSettings] = useState(() => DEFAULT_SITE_SETTINGS);
   const [showLoader, setShowLoader] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
-    const sync = () => setSettings(loadSettings());
-    sync();
-    window.addEventListener(SETTINGS_UPDATED_EVENT, sync);
-    window.addEventListener('storage', sync);
-    return () => {
-      window.removeEventListener(SETTINGS_UPDATED_EVENT, sync);
-      window.removeEventListener('storage', sync);
-    };
+    const settingsRef = doc(db, 'siteSettings', 'main');
+    const unsub = onSnapshot(
+      settingsRef,
+      (snap) => {
+        const data = snap.data() || {};
+        setSettings({ ...DEFAULT_SITE_SETTINGS, ...data });
+      },
+      () => setSettings(DEFAULT_SITE_SETTINGS)
+    );
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -198,7 +180,6 @@ function AppLayout() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/book" element={<BookingPage apiBase={REST_API_BASE} settings={settings} />} />
           <Route path="/contact" element={<ContactPage settings={settings} />} />
           <Route path="/admin/login" element={<LoginPage />} />
           <Route
@@ -211,11 +192,10 @@ function AppLayout() {
           >
             <Route index element={<DashboardPage apiBase={REST_API_BASE} />} />
             <Route path="services" element={<ServicesAdminPage />} />
-            <Route path="offers" element={<OffersAdminPage apiBase={REST_API_BASE} />} />
+            <Route path="offers" element={<OffersAdminPage />} />
             <Route path="gallery" element={<GalleryAdminPage />} />
-            <Route path="appointments" element={<AppointmentsAdminPage apiBase={REST_API_BASE} />} />
             <Route path="settings" element={<SettingsAdminPage />} />
-            <Route path="testimonials" element={<TestimonialsAdminPage apiBase={REST_API_BASE} />} />
+            <Route path="testimonials" element={<TestimonialsAdminPage />} />
           </Route>
           </Routes>
         </main>

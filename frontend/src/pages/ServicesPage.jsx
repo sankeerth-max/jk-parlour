@@ -3,104 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase.js';
 import { useBookingModal } from '../context/BookingModalContext.jsx';
+import { mapVisibleServicesFromSnapshot } from '../lib/serviceDocuments.js';
 
 const SERVICES_COLLECTION = 'services';
 const PLACEHOLDER_IMAGE = '/services-makeup.jpg';
-
-function millisFromCreatedAt(createdAt) {
-  if (!createdAt) return 0;
-  if (typeof createdAt.toMillis === 'function') return createdAt.toMillis();
-  if (typeof createdAt.seconds === 'number') return createdAt.seconds * 1000;
-  return 0;
-}
-
-function normalizeDetails(raw) {
-  if (!raw || !Array.isArray(raw)) return [];
-  return raw.map((x) => String(x).trim()).filter(Boolean);
-}
-
-function dedupeServicesByDocId(rows) {
-  const byId = new Map();
-  for (const row of rows) {
-    if (row.id) byId.set(row.id, row);
-  }
-  return Array.from(byId.values());
-}
-
-/** Same title with different Firestore IDs → one card (keep newest by createdAt) */
-function canonicalTitleKey(title) {
-  let k = String(title ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-  if (k === 'mehendi services') k = 'mehandi services';
-  return k;
-}
-
-function dedupeOnePerTitlePreferNewest(rows) {
-  const sorted = [...rows].sort(
-    (a, b) => millisFromCreatedAt(b.createdAt) - millisFromCreatedAt(a.createdAt)
-  );
-  const seen = new Set();
-  const out = [];
-  for (const row of sorted) {
-    const key = canonicalTitleKey(row.title) || `__id:${row.id}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(row);
-  }
-  return out;
-}
-
-/** Salon catalog order (extras sort after, alphabetically) */
-const SALON_SERVICE_ORDER = [
-  'hair services',
-  'skin care',
-  'makeup & makeovers',
-  'nail care',
-  'waxing',
-  'mehandi services',
-  'bridal services',
-];
-
-function sortSalonServices(rows) {
-  return [...rows].sort((a, b) => {
-    const ka = canonicalTitleKey(a.title);
-    const kb = canonicalTitleKey(b.title);
-    const ia = SALON_SERVICE_ORDER.indexOf(ka);
-    const ib = SALON_SERVICE_ORDER.indexOf(kb);
-    const aKnown = ia !== -1;
-    const bKnown = ib !== -1;
-    if (aKnown && bKnown) return ia - ib;
-    if (aKnown) return -1;
-    if (bKnown) return 1;
-    return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
-  });
-}
-
-function mapServiceDocs(snapshot) {
-  const rows = snapshot.docs.map((docSnap) => {
-    const data = docSnap.data();
-    const priceRaw = data.price;
-    const price =
-      typeof priceRaw === 'number' && !Number.isNaN(priceRaw)
-        ? priceRaw
-        : Number(priceRaw) || 0;
-    const image = String(data.image ?? '').trim();
-    return {
-      id: docSnap.id,
-      title: String(data.title ?? ''),
-      description: String(data.description ?? ''),
-      price,
-      image,
-      details: normalizeDetails(data.details),
-      createdAt: data.createdAt ?? null,
-    };
-  });
-  const byId = dedupeServicesByDocId(rows);
-  const onePerTitle = dedupeOnePerTitlePreferNewest(byId);
-  return sortSalonServices(onePerTitle);
-}
 
 function formatStartingFromRupee(price) {
   const n = typeof price === 'number' && !Number.isNaN(price) ? price : Number(price) || 0;
@@ -210,7 +116,7 @@ export default function ServicesPage() {
     const unsubscribe = onSnapshot(
       colRef,
       (snapshot) => {
-        setServices(mapServiceDocs(snapshot));
+        setServices(mapVisibleServicesFromSnapshot(snapshot));
       },
       () => {
         setServices([]);
