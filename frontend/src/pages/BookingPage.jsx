@@ -161,7 +161,8 @@ ${form.message || '-'}
 
 Please confirm my booking. Thank you 😊`;
 
-    const url = `https://wa.me/918072965181?text=${encodeURIComponent(whatsappText)}`;
+    const encodedMessage = encodeURIComponent(whatsappText);
+    const url = `https://api.whatsapp.com/send?phone=918072965181&text=${encodedMessage}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
