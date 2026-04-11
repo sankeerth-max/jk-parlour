@@ -9,4 +9,8 @@ export const GALLERY_LOCAL_ITEMS_BY_CATEGORY = {
     '/gallery/hair-styling/03.png',
     '/gallery/hair-styling/04.png',
   ],
+  'Salon Interior': [
+    '/gallery/salon-interior/01.png',
+    '/gallery/salon-interior/02.png',
+  ],
 };
