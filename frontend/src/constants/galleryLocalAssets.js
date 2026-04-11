@@ -3,6 +3,14 @@
  * Paths are under `public/`.
  */
 export const GALLERY_LOCAL_ITEMS_BY_CATEGORY = {
+  'Makeup Services': [
+    '/gallery/makeup-services/01.png',
+    '/gallery/makeup-services/02.png',
+    '/gallery/makeup-services/03.png',
+    '/gallery/makeup-services/04.png',
+    '/gallery/makeup-services/05.png',
+    '/gallery/makeup-services/06.png',
+  ],
   'Hair Styling': [
     '/gallery/hair-styling/01.png',
     '/gallery/hair-styling/02.png',
