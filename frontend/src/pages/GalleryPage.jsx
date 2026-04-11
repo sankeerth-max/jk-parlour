@@ -77,8 +77,6 @@ export default function GalleryPage() {
     return merged;
   }, [items, activeCategory]);
 
-  const isHairStyling = activeCategory === 'Hair Styling';
-
   return (
     <motion.section
       className="section-padding-lg bg-cream min-h-screen"
@@ -135,12 +133,12 @@ export default function GalleryPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.12 }}
                 transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.35) }}
-                className="group relative h-36 sm:h-40 md:h-44 w-full overflow-hidden rounded-xl bg-neutral-100 shadow-sm ring-1 ring-ink/[0.06]"
+                className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-neutral-100 shadow-sm ring-1 ring-ink/[0.06]"
               >
                 <button
                   type="button"
                   onClick={() => setLightboxSrc(item.image || PLACEHOLDER_IMAGE)}
-                  className="absolute inset-0 block h-full w-full cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
+                  className="absolute inset-0 flex items-center justify-center p-2 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
                   aria-label="View image full screen"
                 >
                   <img
@@ -150,9 +148,7 @@ export default function GalleryPage() {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = PLACEHOLDER_IMAGE;
                     }}
-                    className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] ${
-                      isHairStyling ? 'object-top' : 'object-center'
-                    }`}
+                    className="max-h-full max-w-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]"
                     loading="lazy"
                     draggable={false}
                   />
