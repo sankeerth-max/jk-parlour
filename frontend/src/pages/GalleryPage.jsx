@@ -23,6 +23,7 @@ function mapGalleryDocs(snapshot) {
 export default function GalleryPage() {
   const [items, setItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState(GALLERY_CATEGORIES[0]);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   useEffect(() => {
     const colRef = collection(db, GALLERY_COLLECTION);
@@ -37,6 +38,20 @@ export default function GalleryPage() {
     );
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightboxSrc(null);
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [lightboxSrc]);
 
   const filtered = useMemo(() => {
     const fromFirestore = items.filter((item) => item.category === activeCategory);
@@ -111,12 +126,8 @@ export default function GalleryPage() {
           })}
         </div>
 
-        <div className="rounded-3xl bg-white/80 backdrop-blur-sm border border-border/60 shadow-[0_24px_60px_-20px_rgba(29,29,31,0.12)] p-4 sm:p-6 md:p-10 lg:p-12">
-          <div
-            className={`grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 ${
-              isHairStyling ? 'lg:grid-cols-2 max-w-5xl mx-auto' : 'lg:grid-cols-3'
-            }`}
-          >
+        <div className="rounded-3xl bg-white/80 backdrop-blur-sm border border-border/60 shadow-[0_24px_60px_-20px_rgba(29,29,31,0.12)] p-4 sm:p-5 md:p-8 lg:p-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {filtered.map((item, index) => (
               <motion.div
                 key={item.id}
@@ -124,24 +135,28 @@ export default function GalleryPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.12 }}
                 transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.35) }}
-                className={`group relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-100 shadow-[0_16px_44px_-18px_rgba(29,29,31,0.22)] ring-1 ${
-                  isHairStyling
-                    ? 'ring-black/[0.06] sm:rounded-[1.25rem]'
-                    : 'ring-ink/[0.06]'
-                }`}
+                className="group relative h-36 sm:h-40 md:h-44 w-full overflow-hidden rounded-xl bg-neutral-100 shadow-sm ring-1 ring-ink/[0.06]"
               >
-                <img
-                  src={item.image || PLACEHOLDER_IMAGE}
-                  alt=""
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = PLACEHOLDER_IMAGE;
-                  }}
-                  className={`h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02] ${
-                    isHairStyling ? 'object-top' : 'object-center'
-                  }`}
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(item.image || PLACEHOLDER_IMAGE)}
+                  className="absolute inset-0 block h-full w-full cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
+                  aria-label="View image full screen"
+                >
+                  <img
+                    src={item.image || PLACEHOLDER_IMAGE}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = PLACEHOLDER_IMAGE;
+                    }}
+                    className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] ${
+                      isHairStyling ? 'object-top' : 'object-center'
+                    }`}
+                    loading="lazy"
+                    draggable={false}
+                  />
+                </button>
               </motion.div>
             ))}
           </div>
@@ -153,6 +168,34 @@ export default function GalleryPage() {
           )}
         </div>
       </div>
+
+      {lightboxSrc ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/93 p-3 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full screen image"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-3 top-3 z-[102] rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:right-5 sm:top-5"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxSrc(null);
+            }}
+          >
+            Close
+          </button>
+          <img
+            src={lightboxSrc}
+            alt=""
+            className="max-h-[min(92vh,92vw)] max-w-full object-contain select-none"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
+        </div>
+      ) : null}
     </motion.section>
   );
 }
