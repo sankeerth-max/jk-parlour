@@ -24,7 +24,7 @@ function AboutPage() {
       <section className="relative h-[72vh] sm:h-[80vh] md:h-[88vh] min-h-[500px] sm:min-h-[560px] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/about-studio-new.png"
+            src="/about-studio-new.jpg"
             alt="Studio interior"
             className="h-full w-full object-cover object-center scale-105 blur-[0.35px] transform-gpu"
           />
