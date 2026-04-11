@@ -17,6 +17,13 @@ export const GALLERY_LOCAL_ITEMS_BY_CATEGORY = {
     '/gallery/hair-styling/03.png',
     '/gallery/hair-styling/04.png',
   ],
+  'Skin Care': [
+    '/gallery/skin-care/01.png',
+    '/gallery/skin-care/02.png',
+    '/gallery/skin-care/03.png',
+    '/gallery/skin-care/04.png',
+    '/gallery/skin-care/05.png',
+  ],
   'Salon Interior': [
     '/gallery/salon-interior/01.png',
     '/gallery/salon-interior/02.png',
