@@ -14,6 +14,33 @@ const PLACEHOLDER_IMAGE = '/gallery/makeup/01.png';
 
 const CATEGORY_BEFORE_AFTER = 'Before & After';
 
+/** Landscape thumbnails fill the cell; portrait/square stay uncropped (contain). */
+function GalleryThumbImage({ src, placeholder }) {
+  const [landscape, setLandscape] = useState(null);
+
+  return (
+    <img
+      src={src}
+      alt=""
+      onLoad={(e) => {
+        const t = e.currentTarget;
+        setLandscape(t.naturalWidth > t.naturalHeight);
+      }}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = placeholder;
+      }}
+      className={
+        landscape === true
+          ? 'absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]'
+          : 'relative max-h-full max-w-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]'
+      }
+      loading="lazy"
+      draggable={false}
+    />
+  );
+}
+
 function mapGalleryDocs(snapshot) {
   return snapshot.docs.map((docSnap) => {
     const data = docSnap.data();
@@ -183,20 +210,10 @@ export default function GalleryPage() {
                             <button
                               type="button"
                               onClick={() => setLightboxSrc(tile.src)}
-                              className="absolute inset-0 flex items-center justify-center p-2 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
+                              className="absolute inset-0 flex items-center justify-center p-0 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
                               aria-label={`View ${tile.label} full screen`}
                             >
-                              <img
-                                src={tile.src}
-                                alt=""
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = PLACEHOLDER_IMAGE;
-                                }}
-                                className="max-h-full max-w-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                                loading="lazy"
-                                draggable={false}
-                              />
+                              <GalleryThumbImage src={tile.src} placeholder={PLACEHOLDER_IMAGE} />
                             </button>
                           </div>
                         </div>
@@ -224,20 +241,10 @@ export default function GalleryPage() {
                         <button
                           type="button"
                           onClick={() => setLightboxSrc(item.image || PLACEHOLDER_IMAGE)}
-                          className="absolute inset-0 flex items-center justify-center p-2 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
+                          className="absolute inset-0 flex items-center justify-center p-0 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
                           aria-label="View image full screen"
                         >
-                          <img
-                            src={item.image || PLACEHOLDER_IMAGE}
-                            alt=""
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = PLACEHOLDER_IMAGE;
-                            }}
-                            className="max-h-full max-w-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                            loading="lazy"
-                            draggable={false}
-                          />
+                          <GalleryThumbImage src={item.image || PLACEHOLDER_IMAGE} placeholder={PLACEHOLDER_IMAGE} />
                         </button>
                       </motion.div>
                     ))}
@@ -259,20 +266,10 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={() => setLightboxSrc(item.image || PLACEHOLDER_IMAGE)}
-                    className="absolute inset-0 flex items-center justify-center p-2 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
+                    className="absolute inset-0 flex items-center justify-center p-0 cursor-zoom-in text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2"
                     aria-label="View image full screen"
                   >
-                    <img
-                      src={item.image || PLACEHOLDER_IMAGE}
-                      alt=""
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = PLACEHOLDER_IMAGE;
-                      }}
-                      className="max-h-full max-w-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                      loading="lazy"
-                      draggable={false}
-                    />
+                    <GalleryThumbImage src={item.image || PLACEHOLDER_IMAGE} placeholder={PLACEHOLDER_IMAGE} />
                   </button>
                 </motion.div>
               ))}
