@@ -157,7 +157,7 @@ export default function GalleryPage() {
         <div className="rounded-3xl bg-white/80 backdrop-blur-sm border border-border/60 shadow-[0_24px_60px_-20px_rgba(29,29,31,0.12)] p-4 sm:p-5 md:p-8 lg:p-10">
           {activeCategory === CATEGORY_BEFORE_AFTER ? (
             <>
-              <div className="space-y-10 md:space-y-12">
+              <div className="space-y-8 md:space-y-10">
                 {GALLERY_BEFORE_AFTER_PAIRS.map((pair, pairIdx) => (
                   <motion.div
                     key={`ba-pair-${pairIdx}`}
@@ -165,21 +165,21 @@ export default function GalleryPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.12 }}
                     transition={{ duration: 0.45, delay: Math.min(pairIdx * 0.08, 0.3) }}
-                    className="max-w-5xl mx-auto"
+                    className="max-w-md sm:max-w-lg md:max-w-xl mx-auto"
                   >
-                    <p className="text-center text-[11px] font-medium uppercase tracking-[0.22em] text-muted mb-4 md:mb-5">
+                    <p className="text-center text-[11px] font-medium uppercase tracking-[0.22em] text-muted mb-3 md:mb-4">
                       Transformation {pairIdx + 1}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
                       {[
                         { src: pair.before, label: 'Before' },
                         { src: pair.after, label: 'After' },
                       ].map((tile) => (
-                        <div key={tile.label} className="flex flex-col gap-2">
+                        <div key={tile.label} className="flex flex-col gap-1.5">
                           <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/80">
                             {tile.label}
                           </p>
-                          <div className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-neutral-100 shadow-sm ring-1 ring-ink/[0.06]">
+                          <div className="group relative mx-auto aspect-[3/4] w-full max-w-[200px] sm:max-w-[220px] md:max-w-[240px] overflow-hidden rounded-xl bg-neutral-100 shadow-sm ring-1 ring-ink/[0.06]">
                             <button
                               type="button"
                               onClick={() => setLightboxSrc(tile.src)}
