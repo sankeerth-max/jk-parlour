@@ -107,6 +107,32 @@ const SALON_SERVICE_ORDER = [
   'bridal services',
 ];
 
+/** Canonical copy for the Mehendi / Mehandi service (overrides messy Firestore text). */
+const MEHENDI_SERVICE_CATALOG = {
+  title: 'Mehendi Services',
+  description:
+    'Beautiful mehendi designs for all occasions including bridal, engagement, and festive events.',
+  price: 299,
+  details: [
+    'Bridal Mehendi',
+    'Engagement Mehendi',
+    'Arabic Designs',
+    'Traditional Designs',
+    'Minimal Mehendi',
+  ],
+};
+
+function applyMehendiServiceCatalog(row) {
+  if (canonicalTitleKey(row.title) !== 'mehandi services') return row;
+  return {
+    ...row,
+    title: MEHENDI_SERVICE_CATALOG.title,
+    description: MEHENDI_SERVICE_CATALOG.description,
+    price: MEHENDI_SERVICE_CATALOG.price,
+    details: [...MEHENDI_SERVICE_CATALOG.details],
+  };
+}
+
 function sortSalonServices(rows) {
   return [...rows].sort((a, b) => {
     const ka = canonicalTitleKey(a.title);
@@ -138,7 +164,7 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
     const offerPercentage =
       Number.isFinite(offerPercentageRaw) && offerPercentageRaw > 0 ? offerPercentageRaw : 0;
     const offerText = String(data.offerText ?? '').trim();
-    return {
+    return applyMehendiServiceCatalog({
       id: docSnap.id,
       title: String(data.title ?? ''),
       description: String(data.description ?? ''),
@@ -148,7 +174,7 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
       offerPercentage,
       offerText,
       createdAt: data.createdAt ?? null,
-    };
+    });
   });
   const byId = dedupeServicesByDocId(rows);
   const onePerTitle = dedupeOnePerTitlePreferNewest(byId);

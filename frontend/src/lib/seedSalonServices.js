@@ -82,17 +82,17 @@ const SALON_SERVICES_SEED = [
     ],
   },
   {
-    title: 'Mehandi Services',
-    description: 'Intricate henna designs for weddings, festivals, and special occasions.',
-    price: 500,
+    title: 'Mehendi Services',
+    description:
+      'Beautiful mehendi designs for all occasions including bridal, engagement, and festive events.',
+    price: 299,
     image: '/services-mehandi.png',
     details: [
-      'Bridal Mehandi',
-      'Party & Guest Mehandi',
-      'Arabic & Indo-Arabic Styles',
-      'Traditional Motifs',
-      'Leg & Full Hand Designs',
-      'Aftercare Guidance',
+      'Bridal Mehendi',
+      'Engagement Mehendi',
+      'Arabic Designs',
+      'Traditional Designs',
+      'Minimal Mehendi',
     ],
   },
   {
