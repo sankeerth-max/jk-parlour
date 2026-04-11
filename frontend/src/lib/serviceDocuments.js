@@ -42,6 +42,22 @@ function dedupeOnePerTitlePreferNewest(rows) {
   return out;
 }
 
+/**
+ * Fixed hero images per catalog title (canonical keys). Overrides Firestore `image`
+ * so Services + Admin stay consistent with the studio’s chosen assets.
+ */
+export const SERVICE_CARD_IMAGE_BY_TITLE_KEY = {
+  'bridal services': '/services-bridal.png',
+  'hair services': '/services-hair.png',
+  'skin care': '/services-skin-care.png',
+  'makeup & makeovers': '/services-makeup.png',
+  'nail care': '/services-nail-care.png',
+  'waxing': '/services-waxing.png',
+  'mehandi services': '/services-mehandi.png',
+};
+
+export const SKIN_CARE_SERVICE_IMAGE = SERVICE_CARD_IMAGE_BY_TITLE_KEY['skin care'];
+
 const SALON_SERVICE_ORDER = [
   'hair services',
   'skin care',
@@ -75,7 +91,10 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
       typeof priceRaw === 'number' && !Number.isNaN(priceRaw)
         ? priceRaw
         : Number(priceRaw) || 0;
-    const image = String(data.image ?? '').trim();
+    let image = String(data.image ?? '').trim();
+    const titleKey = canonicalTitleKey(String(data.title ?? ''));
+    const mappedImage = SERVICE_CARD_IMAGE_BY_TITLE_KEY[titleKey];
+    if (mappedImage) image = mappedImage;
     const offerPercentageRaw = Number(data.offerPercentage);
     const offerPercentage =
       Number.isFinite(offerPercentageRaw) && offerPercentageRaw > 0 ? offerPercentageRaw : 0;

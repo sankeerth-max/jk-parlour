@@ -10,7 +10,7 @@ const SALON_SERVICES_SEED = [
     description:
       'Precision cuts, styling, and restorative care in a calm salon setting.',
     price: 150,
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9',
+    image: '/services-hair.png',
     details: [
       'Hair Cut (Layer / Step / U Cut)',
       'Hair Styling (Blow Dry, Curls, Straightening)',
@@ -25,7 +25,7 @@ const SALON_SERVICES_SEED = [
     title: 'Skin Care',
     description: 'Glow-focused facials and rituals tailored to your skin.',
     price: 300,
-    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03',
+    image: '/services-skin-care.png',
     details: [
       'Basic Cleanup',
       'Fruit Facial',
@@ -40,7 +40,7 @@ const SALON_SERVICES_SEED = [
     title: 'Makeup & Makeovers',
     description: 'Soft glam and event-ready looks with a refined, natural finish.',
     price: 3000,
-    image: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8',
+    image: '/services-makeup.png',
     details: [
       'Party Makeup',
       'Engagement Makeup',
@@ -55,7 +55,7 @@ const SALON_SERVICES_SEED = [
     title: 'Nail Care',
     description: 'Manicure and pedicure care for polished, healthy nails.',
     price: 100,
-    image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371',
+    image: '/services-nail-care.png',
     details: [
       'Manicure',
       'Pedicure',
@@ -70,7 +70,7 @@ const SALON_SERVICES_SEED = [
     title: 'Waxing',
     description: 'Smooth, hygienic waxing from face to body.',
     price: 80,
-    image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a',
+    image: '/services-waxing.png',
     details: [
       'Full Arms Wax',
       'Full Legs Wax',
@@ -85,7 +85,7 @@ const SALON_SERVICES_SEED = [
     title: 'Mehandi Services',
     description: 'Intricate henna designs for weddings, festivals, and special occasions.',
     price: 500,
-    image: 'https://images.unsplash.com/photo-1528164344705-47542687000d',
+    image: '/services-mehandi.png',
     details: [
       'Bridal Mehandi',
       'Party & Guest Mehandi',
@@ -99,7 +99,7 @@ const SALON_SERVICES_SEED = [
     title: 'Bridal Services',
     description: 'Complete bridal looks with premium finishing for your celebration.',
     price: 4999,
-    image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702',
+    image: '/services-bridal.png',
     details: [
       'Bridal Makeup',
       'Bridal Hairstyling',
