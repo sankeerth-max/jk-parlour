@@ -19,10 +19,10 @@ export const GALLERY_LOCAL_ITEMS_BY_CATEGORY = {
 export const GALLERY_BEFORE_AFTER_PAIRS = [
   {
     before: '/gallery/before-after/01.png',
-    after: '/gallery/before-after/02.png',
+    after: '/gallery/before-after/04.png',
   },
   {
     before: '/gallery/before-after/03.png',
-    after: '/gallery/before-after/04.png',
+    after: '/gallery/before-after/02.png',
   },
 ];
