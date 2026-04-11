@@ -123,14 +123,15 @@ function HomePage() {
     <>
       {/* Hero (full-width background image) */}
       <section className="relative h-[78vh] sm:h-[85vh] md:h-[90vh] min-h-[540px] sm:min-h-[600px] md:min-h-[640px] overflow-hidden">
-        {/* Background image layer (slightly blurred behind text) */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: "url('/hero-main.png')",
-            backgroundPosition: 'center 24%',
-            transform: 'scale(1.01)',
-          }}
+        {/* Hero image: img + preload so discovery is immediate (faster LCP than CSS background) */}
+        <img
+          src="/hero-main.png"
+          alt=""
+          width={1024}
+          height={573}
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-[center_24%] scale-[1.01] pointer-events-none select-none"
           aria-hidden="true"
         />
 
