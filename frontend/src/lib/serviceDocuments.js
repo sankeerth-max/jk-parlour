@@ -122,14 +122,23 @@ const MEHENDI_SERVICE_CATALOG = {
   ],
 };
 
+function isMehendiCatalogTitle(rawTitle) {
+  const k = canonicalTitleKey(rawTitle);
+  if (k === 'mehandi services') return true;
+  if (/\bmehendi\b|\bmehandi\b/.test(k)) return true;
+  return k === 'henna' || k.startsWith('henna ');
+}
+
 function applyMehendiServiceCatalog(row) {
-  if (canonicalTitleKey(row.title) !== 'mehandi services') return row;
+  if (!isMehendiCatalogTitle(row.title)) return row;
   return {
     ...row,
     title: MEHENDI_SERVICE_CATALOG.title,
     description: MEHENDI_SERVICE_CATALOG.description,
     price: MEHENDI_SERVICE_CATALOG.price,
     details: [...MEHENDI_SERVICE_CATALOG.details],
+    offerPercentage: 0,
+    offerText: '',
   };
 }
 

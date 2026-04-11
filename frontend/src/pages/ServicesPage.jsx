@@ -36,7 +36,7 @@ function ServiceCard({ service, isOpen, onToggleDetails, onBook }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-12px_rgba(29,29,31,0.15)] ring-1 ring-ink/[0.06] hover:shadow-[0_20px_50px_-16px_rgba(29,29,31,0.18)] transition-shadow duration-300"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-12px_rgba(29,29,31,0.15)] ring-1 ring-ink/[0.06] hover:shadow-[0_20px_50px_-16px_rgba(29,29,31,0.18)] transition-shadow duration-300"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-warmbeige">
         <img
@@ -151,7 +151,7 @@ export default function ServicesPage() {
         {services.length === 0 ? (
           <p className="text-center text-muted py-16 text-sm">No services available at the moment.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 items-stretch">
             {services.map((service) => (
               <ServiceCard
                 key={service.id}
