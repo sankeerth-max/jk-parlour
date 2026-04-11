@@ -13,4 +13,11 @@ export const GALLERY_LOCAL_ITEMS_BY_CATEGORY = {
     '/gallery/salon-interior/01.png',
     '/gallery/salon-interior/02.png',
   ],
+  /** Order: before → after → before → after */
+  'Before & After': [
+    '/gallery/before-after/01.png',
+    '/gallery/before-after/02.png',
+    '/gallery/before-after/03.png',
+    '/gallery/before-after/04.png',
+  ],
 };
