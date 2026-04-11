@@ -51,12 +51,51 @@ export const SERVICE_CARD_IMAGE_BY_TITLE_KEY = {
   'hair services': '/services-hair.png',
   'skin care': '/services-skin-care.png',
   'makeup & makeovers': '/services-makeup.png',
+  'makeup and makeovers': '/services-makeup.png',
   'nail care': '/services-nail-care.png',
   'waxing': '/services-waxing.png',
   'mehandi services': '/services-mehandi.png',
+  'mehendi services': '/services-mehandi.png',
 };
 
+/** Bumps when replacing public/service-*.png so browsers fetch new files. */
+const SERVICE_IMAGE_CACHE = 'v=20260411';
+
 export const SKIN_CARE_SERVICE_IMAGE = SERVICE_CARD_IMAGE_BY_TITLE_KEY['skin care'];
+
+function withServiceImageCache(path) {
+  if (!path || typeof path !== 'string') return path;
+  if (!path.startsWith('/services-')) return path;
+  return path.includes('?') ? path : `${path}?${SERVICE_IMAGE_CACHE}`;
+}
+
+/**
+ * Resolves the fixed card image for a service title. Firestore titles vary
+ * ("Makeup and Makeovers", typos, extra words) so we match exact keys first,
+ * then safe keyword rules (skin care before bridal to avoid pre-bridal skincare).
+ */
+export function resolveServiceCardImage(rawTitle) {
+  const m = SERVICE_CARD_IMAGE_BY_TITLE_KEY;
+  const k = canonicalTitleKey(rawTitle);
+  const variants = [
+    k,
+    k.replace(/\s*&\s*/g, ' and '),
+    k.replace(/\s+and\s+/g, ' & '),
+  ];
+  for (const key of variants) {
+    if (m[key]) return m[key];
+  }
+
+  if (/\bskin(?:\s*)care\b|\bskincare\b/i.test(k)) return m['skin care'];
+  if (/\b(waxing|wax)\b/i.test(k)) return m['waxing'];
+  if (/\bnail\b/i.test(k)) return m['nail care'];
+  if (/\bmehandi\b|\bmehendi\b|\bhenna\b/i.test(k)) return m['mehandi services'];
+  if (/\bmakeup\b/i.test(k)) return m['makeup & makeovers'];
+  if (/\bbridal\b/i.test(k)) return m['bridal services'];
+  if (/\bhair\b/i.test(k)) return m['hair services'];
+
+  return null;
+}
 
 const SALON_SERVICE_ORDER = [
   'hair services',
@@ -91,10 +130,10 @@ export function mapVisibleServicesFromSnapshot(snapshot) {
       typeof priceRaw === 'number' && !Number.isNaN(priceRaw)
         ? priceRaw
         : Number(priceRaw) || 0;
-    let image = String(data.image ?? '').trim();
-    const titleKey = canonicalTitleKey(String(data.title ?? ''));
-    const mappedImage = SERVICE_CARD_IMAGE_BY_TITLE_KEY[titleKey];
-    if (mappedImage) image = mappedImage;
+    let image = String(data.image ?? data.imageUrl ?? '').trim();
+    const resolved = resolveServiceCardImage(String(data.title ?? ''));
+    if (resolved) image = withServiceImageCache(resolved);
+    else if (image) image = withServiceImageCache(image);
     const offerPercentageRaw = Number(data.offerPercentage);
     const offerPercentage =
       Number.isFinite(offerPercentageRaw) && offerPercentageRaw > 0 ? offerPercentageRaw : 0;
